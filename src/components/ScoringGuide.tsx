@@ -136,6 +136,9 @@ export const ScoringGuide: React.FC<ScoringGuideProps> = ({ onStartQuizFromGuide
                 src={getPlayerPhotoUrl(equippedHero)}
                 alt={equippedHero.name}
                 className="w-full h-full object-cover object-top"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/images/players/kane-9.jpg';
+                }}
               />
             </div>
             <div>

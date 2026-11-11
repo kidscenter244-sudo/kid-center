@@ -269,6 +269,9 @@ export const PlayerCoverFlowCarousel: React.FC<PlayerCoverFlowCarouselProps> = (
                     alt={char.name}
                     className="w-full h-full object-cover object-top rounded-2xl filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.8)]"
                     loading="eager"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/images/players/kane-9.jpg';
+                    }}
                   />
                 </div>
 
@@ -339,6 +342,9 @@ export const PlayerCoverFlowCarousel: React.FC<PlayerCoverFlowCarouselProps> = (
                 src={getPlayerPhotoUrl(activeChar)}
                 alt={activeChar.name}
                 className="w-full h-full object-cover object-top"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/images/players/kane-9.jpg';
+                }}
               />
             </div>
             <div>
@@ -501,6 +507,9 @@ export const PlayerCoverFlowCarousel: React.FC<PlayerCoverFlowCarouselProps> = (
                     src={getPlayerPhotoUrl(c)}
                     alt={c.name}
                     className="w-full h-full object-cover object-top"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/images/players/kane-9.jpg';
+                    }}
                   />
                 </div>
                 <span className="text-xs font-black whitespace-nowrap">{c.name}</span>

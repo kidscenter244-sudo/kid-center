@@ -78,6 +78,9 @@ export const StudentLeaderboard: React.FC = () => {
                   src={getPlayerPhotoUrl(CHARACTERS.find((c) => c.id === top3[1].equippedCharacterId))}
                   alt={top3[1].name}
                   className="w-full h-full object-cover object-top"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/images/players/kane-9.jpg';
+                  }}
                 />
               </div>
               <h3 className="font-black text-base text-neutral-900 truncate">{top3[1].name}</h3>
@@ -111,6 +114,9 @@ export const StudentLeaderboard: React.FC = () => {
                   src={getPlayerPhotoUrl(CHARACTERS.find((c) => c.id === top3[0].equippedCharacterId))}
                   alt={top3[0].name}
                   className="w-full h-full object-cover object-top"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/images/players/kane-9.jpg';
+                  }}
                 />
               </div>
               <h3 className="font-black text-lg text-neutral-900 truncate">{top3[0].name}</h3>
@@ -143,6 +149,9 @@ export const StudentLeaderboard: React.FC = () => {
                   src={getPlayerPhotoUrl(CHARACTERS.find((c) => c.id === top3[2].equippedCharacterId))}
                   alt={top3[2].name}
                   className="w-full h-full object-cover object-top"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/images/players/kane-9.jpg';
+                  }}
                 />
               </div>
               <h3 className="font-black text-base text-neutral-900 truncate">{top3[2].name}</h3>
@@ -300,6 +309,9 @@ export const StudentLeaderboard: React.FC = () => {
                               src={getPlayerPhotoUrl(char)}
                               alt={char.name}
                               className="w-full h-full object-cover object-top"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/images/players/kane-9.jpg';
+                              }}
                             />
                           </div>
                           <span className="font-black text-neutral-800">{char.name}</span>

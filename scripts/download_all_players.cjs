@@ -47,18 +47,17 @@ const PLAYER_WIKI_MAP = {
   'martinez-23': 'Emiliano_Mart%C3%ADnez',
   'vandijk-4': 'Virgil_van_Dijk',
   'davies-19': 'Alphonso_Davies',
-  'spider-hero': 'Spider-Man',
-  'iron-hero': 'Iron_Man',
-  'bat-hero': 'Batman',
-  'saiyan-goku': 'Goku',
-  'ninja-naruto': 'Naruto_Uzumaki',
-  'pirate-luffy': 'Monkey_D._Luffy',
-  'speed-sonic': 'Sonic_the_Hedgehog',
-  'deadpool-blox': 'Deadpool',
-  'titan-eren': 'Eren_Yeager',
-  'cyber-titan': 'Mecha',
-  'pharaoh-king': 'Tutankhamun',
-  'rookie-champ': 'Football_player'
+  'saliba-2': 'William_Saliba',
+  'rice-41': 'Declan_Rice',
+  'bruno-8': 'Bruno_Fernandes',
+  'bernardo-20': 'Bernardo_Silva',
+  'lautaro-10': 'Lautaro_Mart%C3%ADnez',
+  'macallister-10': 'Alexis_Mac_Allister',
+  'neuer-1': 'Manuel_Neuer',
+  'dias-3': 'R%C3%BAben_Dias',
+  'gvardiol-24': 'Jo%C5%A1ko_Gvardiol',
+  'kimmich-6': 'Joshua_Kimmich',
+  'camavinga-12': 'Eduardo_Camavinga'
 };
 
 const outputDir = path.join(__dirname, '../public/images/players');

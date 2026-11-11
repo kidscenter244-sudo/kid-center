@@ -285,6 +285,9 @@ export const TeacherPortal: React.FC = () => {
                               src={getPlayerPhotoUrl(char)}
                               alt={char.name}
                               className="w-full h-full object-cover object-top"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = '/images/players/kane-9.jpg';
+                              }}
                             />
                           </div>
                           <span className="font-black text-neutral-800">{char.name}</span>

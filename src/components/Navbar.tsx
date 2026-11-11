@@ -93,6 +93,9 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
                   src={getPlayerPhotoUrl(equippedChar)}
                   alt={equippedChar.name}
                   className="w-full h-full object-cover object-top"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/images/players/kane-9.jpg';
+                  }}
                 />
               </div>
               <span className="max-w-[60px] truncate text-neutral-900 hidden md:inline font-black text-[11px]">

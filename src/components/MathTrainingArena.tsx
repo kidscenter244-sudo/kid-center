@@ -155,6 +155,9 @@ export const MathTrainingArena: React.FC<MathTrainingArenaProps> = ({ onStartQui
               src={getPlayerPhotoUrl(equippedHero)}
               alt={equippedHero.name}
               className="w-full h-full object-cover object-top"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/images/players/kane-9.jpg';
+              }}
             />
             {equippedHero.hasBallonDor && (
               <span className="absolute bottom-0 right-0 bg-amber-400 text-neutral-950 text-[10px] font-black px-1 rounded-tl border-t border-l border-neutral-900">

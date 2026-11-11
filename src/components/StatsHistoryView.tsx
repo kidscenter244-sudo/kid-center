@@ -72,6 +72,9 @@ export const StatsHistoryView: React.FC = () => {
                 src={getPlayerPhotoUrl(equippedChar)}
                 alt={equippedChar.name}
                 className="w-full h-full object-cover object-top"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/images/players/kane-9.jpg';
+                }}
               />
               <span className="absolute bottom-0 right-0 bg-neutral-900/90 text-amber-300 font-mono text-[9px] font-black px-1 rounded-tl">
                 #{equippedChar.jerseyNumber || '★'}
