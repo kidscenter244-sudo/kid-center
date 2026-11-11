@@ -20,11 +20,11 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  const handleStudentLogin = (e: React.FormEvent) => {
+  const handleStudentLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     sounds.playKeyClick();
     setErrorMsg('');
-    const res = login(email, password);
+    const res = await login(email, password);
     if (!res.success) {
       setErrorMsg(res.message);
       sounds.playWrong();
@@ -35,11 +35,11 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
     }
   };
 
-  const handleStudentRegister = (e: React.FormEvent) => {
+  const handleStudentRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     sounds.playKeyClick();
     setErrorMsg('');
-    const res = register(email, password, nickname);
+    const res = await register(email, password, nickname);
     if (!res.success) {
       setErrorMsg(res.message);
       sounds.playWrong();
