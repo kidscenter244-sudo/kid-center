@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { sounds } from '../utils/audio';
 import { CHARACTERS, getPlayerPhotoUrl } from '../data/characters';
@@ -19,7 +19,7 @@ import {
 import confetti from 'canvas-confetti';
 
 export const TeacherPortal: React.FC = () => {
-  const { isTeacher, teacherLogin, studentRoster, awardStudentCoins } = useAuth();
+  const { isTeacher, teacherLogin, studentRoster, awardStudentCoins, refreshStudentRoster } = useAuth();
 
   const [passcode, setPasscode] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -29,10 +29,10 @@ export const TeacherPortal: React.FC = () => {
   const [bonusAmount, setBonusAmount] = useState(100);
   const [rewardMsg, setRewardMsg] = useState('');
 
-  const handleTeacherSubmit = (e: React.FormEvent) => {
+  useEffect(() => {\n    if (!isTeacher) return;\n    const timer = window.setInterval(() => { refreshStudentRoster().catch(() => undefined); }, 15000);\n    return () => window.clearInterval(timer);\n  }, [isTeacher, refreshStudentRoster]);\n\n  const handleTeacherSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     sounds.playKeyClick();
-    const res = teacherLogin(passcode);
+    const res = await teacherLogin(passcode);
     if (!res.success) {
       setLoginError(res.message);
     } else {
