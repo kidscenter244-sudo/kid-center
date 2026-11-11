@@ -37,10 +37,10 @@ const mapProfile = (row: any, email: string): UserAccount => ({
   nickname: row.nickname || email.split('@')[0],
   role: row.role === 'teacher' ? 'teacher' : 'student',
   coins: Number(row.coins ?? 450),
-  unlockedCharacters: Array.isArray(row.unlocked_characters) ? row.unlocked_characters.filter((id: string) => id !== 'yamal-19') : [],
-  equippedCharacterId: row.equipped_character_id && row.equipped_character_id !== 'yamal-19' && (row.unlocked_characters || []).includes(row.equipped_character_id)
+  unlockedCharacters: Array.isArray(row.unlocked_characters) ? row.unlocked_characters : [],
+  equippedCharacterId: row.equipped_character_id && Array.isArray(row.unlocked_characters) && row.unlocked_characters.includes(row.equipped_character_id)
     ? row.equipped_character_id
-    : (Array.isArray(row.unlocked_characters) ? row.unlocked_characters.find((id: string) => id !== 'yamal-19') || '' : ''),
+    : (Array.isArray(row.unlocked_characters) ? row.unlocked_characters[0] || '' : ''),
   stats: {
     totalSolved: 0, totalCorrect: 0, totalCoinsEarned: 450, bestStreak: 0,
     ...(row.stats && typeof row.stats === 'object' ? row.stats : {})
@@ -121,7 +121,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const cached = localStorage.getItem(`kids_center_user_${email.toLowerCase()}`);
       if (cached) {
         const parsed = JSON.parse(cached) as UserAccount;
-        if (parsed?.email?.toLowerCase() === email.toLowerCase()) cachedProfile = parsed;
+        if (parsed?.email?.toLowerCase() === email.toLowerCase()) {
+          const migrationKey = `kids_center_no_free_yamal_v1_${email.toLowerCase()}`;
+          if (localStorage.getItem(migrationKey) !== 'done') {
+            parsed.unlockedCharacters = (parsed.unlockedCharacters || []).filter(id => id !== 'yamal-19');
+            if (parsed.equippedCharacterId === 'yamal-19') {
+              parsed.equippedCharacterId = parsed.unlockedCharacters[0] || '';
+            }
+            localStorage.setItem(`kids_center_user_${email.toLowerCase()}`, JSON.stringify(parsed));
+            localStorage.setItem(migrationKey, 'done');
+          }
+          cachedProfile = parsed;
+        }
       }
     } catch { /* Ignore invalid local cache. */ }
 
@@ -131,8 +142,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     let profile = cloudProfile;
     if (cachedProfile) {
-      const cloudCharacters = (cloudProfile.unlockedCharacters || []).filter(id => id !== 'yamal-19');
-      const localCharacters = (cachedProfile.unlockedCharacters || []).filter(id => id !== 'yamal-19');
+      const cloudCharacters = cloudProfile.unlockedCharacters || [];
+      const localCharacters = cachedProfile.unlockedCharacters || [];
       const restoreLocalWallet = localCharacters.length > cloudCharacters.length;
       const mergedStats = {
         totalSolved: Math.max(cloudProfile.stats.totalSolved || 0, cachedProfile.stats?.totalSolved || 0),
