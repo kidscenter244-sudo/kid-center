@@ -211,11 +211,10 @@ const RAW_CHARACTERS: (CharacterItem & { robloxConfig?: any })[] = [
   {
     id: 'yamal-19',
     name: 'Lamine Yamal',
-    title: 'Golden Wonderkid #19 • Starter Ace',
+    title: 'Golden Wonderkid #19',
     category: 'football',
-    tier: 'Starter',
-    price: 0,
-    unlockedByDefault: true,
+    tier: 'Pro',
+    price: 15000,
     primaryColor: '#991b1b', // Blaugrana Garnet
     secondaryColor: '#1e3a8a', // Blaugrana Deep Blue
     accentColor: '#fbbf24',
@@ -1515,7 +1514,7 @@ const RAW_CHARACTERS: (CharacterItem & { robloxConfig?: any })[] = [
 ];
 
 export const getPlayerPhotoUrl = (char?: { id: string; photoUrl?: string } | null): string => {
-  if (!char) return '/images/players/kane-9.jpg';
+  if (!char) return `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><rect width="128" height="128" rx="24" fill="#171717"/><circle cx="64" cy="64" r="34" fill="none" stroke="#fbbf24" stroke-width="5"/><path d="M64 30 76 43 71 60 57 60 52 43ZM30 56 49 48 57 60 49 77 31 72ZM98 56 79 48 71 60 79 77 97 72ZM43 94 49 77 64 70 79 77 85 94 64 103Z" fill="#fbbf24" stroke="#fbbf24" stroke-width="2"/></svg>')}`;
   return char.photoUrl || `/images/players/${char.id}.jpg`;
 };
 

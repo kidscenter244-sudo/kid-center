@@ -256,7 +256,7 @@ export const StudentLeaderboard: React.FC = () => {
               </thead>
               <tbody className="divide-y divide-neutral-200">
                 {filteredStudents.map((std, index) => {
-                  const char = CHARACTERS.find((c) => c.id === std.equippedCharacterId) || CHARACTERS[0];
+                  const char = CHARACTERS.find((c) => c.id === std.equippedCharacterId);
                   const isCurrent = user?.email.toLowerCase() === std.email.toLowerCase();
                   const ownedCount = (isCurrent ? user?.unlockedCharacters?.length : std.unlockedCount) ?? 1;
 
@@ -307,14 +307,14 @@ export const StudentLeaderboard: React.FC = () => {
                           <div className="w-7 h-7 rounded-lg border border-neutral-900 overflow-hidden shrink-0 bg-neutral-900">
                             <img
                               src={getPlayerPhotoUrl(char)}
-                              alt={char.name}
+                              alt={char?.name || 'No player equipped'}
                               className="w-full h-full object-cover object-top"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).src = '/images/players/kane-9.jpg';
                               }}
                             />
                           </div>
-                          <span className="font-black text-neutral-800">{char.name}</span>
+                          <span className="font-black text-neutral-800">{char?.name || 'No player equipped'}</span>
                         </div>
                       </td>
 

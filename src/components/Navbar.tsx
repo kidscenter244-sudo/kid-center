@@ -15,7 +15,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
   const { user, openAuthModal, isAuthenticated, isTeacher, logout } = useAuth();
 
-  const equippedChar = CHARACTERS.find((c) => c.id === user?.equippedCharacterId) || CHARACTERS[0];
+  const equippedChar = CHARACTERS.find((c) => c.id === user?.equippedCharacterId);
 
   return (
     <>
@@ -88,15 +88,8 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab }) => {
               className="flex items-center gap-1.5 bg-white hover:bg-neutral-100 border-2 border-neutral-900 px-2 py-1 rounded-xl shadow-[0_2px_0_0_#171717] text-xs font-bold cursor-pointer transition-all active:translate-y-0.5"
               title="Account & Profile Settings"
             >
-              <div className="w-5 h-5 rounded-full border border-neutral-900 overflow-hidden shrink-0 bg-neutral-900">
-                <img
-                  src={getPlayerPhotoUrl(equippedChar)}
-                  alt={equippedChar.name}
-                  className="w-full h-full object-cover object-top"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/images/players/kane-9.jpg';
-                  }}
-                />
+              <div className="w-5 h-5 rounded-full border border-neutral-900 overflow-hidden shrink-0 bg-neutral-100 flex items-center justify-center">
+                {equippedChar ? <img src={getPlayerPhotoUrl(equippedChar)} alt={equippedChar.name} className="w-full h-full object-cover object-top" /> : <span className="text-[11px]">⚽</span>}
               </div>
               <span className="max-w-[60px] truncate text-neutral-900 hidden md:inline font-black text-[11px]">
                 {user?.nickname || 'Player'}
