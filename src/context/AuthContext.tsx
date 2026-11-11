@@ -113,18 +113,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loadCloudProfile = async (authId: string, email: string) => {
     const { data, error } = await supabase.from('profiles').select('*').eq('id', authId).maybeSingle();
     if (error) throw error;
-    if (data) {
-      const profile = mapProfile(data, email);
-      setAuthUserId(authId);
-      setUser(profile);
-      localStorage.setItem(`kids_center_user_${profile.email}`, JSON.stringify(profile));
-      localStorage.setItem('kids_center_active_email', profile.email);
-    } else {
-      const profile = { ...DEFAULT_USER, email, nickname: email.split('@')[0] };
-      await persistProfile(authId, profile);
-      setAuthUserId(authId);
-      setUser(profile);
+
+    let cachedProfile: UserAccount | null = null;
+    try {
+      const cached = localStorage.getItem(`kids_center_user_${email.toLowerCase()}`);
+      if (cached) {
+        const parsed = JSON.parse(cached) as UserAccount;
+        if (parsed?.email?.toLowerCase() === email.toLowerCase()) cachedProfile = parsed;
+      }
+    } catch { /* Ignore invalid local cache. */ }
+
+    const cloudProfile = data
+      ? mapProfile(data, email)
+      : { ...DEFAULT_USER, email, nickname: email.split('@')[0] };
+
+    let profile = cloudProfile;
+    if (cachedProfile) {
+      const cloudCharacters = cloudProfile.unlockedCharacters || ['yamal-19'];
+      const localCharacters = cachedProfile.unlockedCharacters || ['yamal-19'];
+      const restoreLocalWallet = localCharacters.length > cloudCharacters.length;
+      const mergedStats = {
+        totalSolved: Math.max(cloudProfile.stats.totalSolved || 0, cachedProfile.stats?.totalSolved || 0),
+        totalCorrect: Math.max(cloudProfile.stats.totalCorrect || 0, cachedProfile.stats?.totalCorrect || 0),
+        totalCoinsEarned: Math.max(cloudProfile.stats.totalCoinsEarned || 0, cachedProfile.stats?.totalCoinsEarned || 0),
+        bestStreak: Math.max(cloudProfile.stats.bestStreak || 0, cachedProfile.stats?.bestStreak || 0)
+      };
+      const mergedHistory = [...(cachedProfile.history || []), ...(cloudProfile.history || [])]
+        .filter((item, index, all) => all.findIndex(other => other.id === item.id) === index)
+        .slice(0, 100);
+      profile = {
+        ...cloudProfile,
+        coins: restoreLocalWallet ? Number(cachedProfile.coins ?? cloudProfile.coins) : cloudProfile.coins,
+        unlockedCharacters: Array.from(new Set([...cloudCharacters, ...localCharacters])),
+        equippedCharacterId: localCharacters.includes(cachedProfile.equippedCharacterId)
+          ? cachedProfile.equippedCharacterId
+          : cloudProfile.equippedCharacterId,
+        stats: mergedStats,
+        history: mergedHistory
+      };
     }
+
+    // Restore any newer browser-only purchases/statistics into Supabase instead of silently replacing them with an older cloud snapshot.
+    if (!data || JSON.stringify(profile) !== JSON.stringify(cloudProfile)) {
+      await persistProfile(authId, profile);
+    }
+    setAuthUserId(authId);
+    setUser(profile);
+    localStorage.setItem(`kids_center_user_${profile.email}`, JSON.stringify(profile));
+    localStorage.setItem('kids_center_active_email', profile.email);
   };
 
   useEffect(() => {
