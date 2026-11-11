@@ -25,10 +25,10 @@ export const AuthModal: React.FC = () => {
 
   if (!isAuthModalOpen) return null;
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     sounds.playKeyClick();
-    const res = login(email, password);
+    const res = await login(email, password);
     setMsg({ text: res.message, error: !res.success });
     if (res.success) {
       setTimeout(() => {
@@ -38,10 +38,10 @@ export const AuthModal: React.FC = () => {
     }
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     sounds.playKeyClick();
-    const res = register(email, password, nickname);
+    const res = await register(email, password, nickname);
     setMsg({ text: res.message, error: !res.success });
     if (res.success) {
       setTimeout(() => {
