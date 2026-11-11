@@ -14,8 +14,8 @@ export const CinematicIntroSplash: React.FC<CinematicIntroSplashProps> = ({ onCo
   const [secondsLeft, setSecondsLeft] = useState(5);
   const { user } = useAuth();
   // Display the student's own equipped player!
-  const equippedId = user?.equippedCharacterId || user?.unlockedCharacters?.[0] || 'yamal-19';
-  const equippedHero = CHARACTERS.find((c) => c.id === equippedId) || CHARACTERS[0];
+  const equippedId = user?.equippedCharacterId || user?.unlockedCharacters?.[0] || '';
+  const equippedHero = CHARACTERS.find((c) => c.id === equippedId);
 
   useEffect(() => {
     sounds.playStreak();
@@ -96,16 +96,20 @@ export const CinematicIntroSplash: React.FC<CinematicIntroSplashProps> = ({ onCo
           {/* Right Column: Player Photo Showcase */}
           <div className="md:col-span-5 flex flex-col items-center">
             <div className="w-full max-w-xs">
-              <div className="mb-2 text-center">
-                <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 bg-amber-950/80 px-2.5 py-0.5 rounded-full border border-amber-800">
-                  Your Equipped Champion
-                </span>
-              </div>
-              <PlayerPhotoShowcase
-                character={equippedHero}
-                isCompact={true}
-                showDetailsOverlay={true}
-              />
+              {equippedHero ? (
+                <>
+                  <div className="mb-2 text-center">
+                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 bg-amber-950/80 px-2.5 py-0.5 rounded-full border border-amber-800">Your Equipped Champion</span>
+                  </div>
+                  <PlayerPhotoShowcase character={equippedHero} isCompact={true} showDetailsOverlay={true} />
+                </>
+              ) : (
+                <div className="aspect-[3/4] min-h-[300px] rounded-3xl border-2 border-dashed border-neutral-700 bg-neutral-900/80 flex flex-col items-center justify-center text-center p-6 text-white">
+                  <span className="text-6xl mb-4">⚽</span>
+                  <h2 className="text-xl font-black">No Player Yet</h2>
+                  <p className="text-sm text-neutral-400 mt-2">Visit the Players Locker and buy your first football star.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
