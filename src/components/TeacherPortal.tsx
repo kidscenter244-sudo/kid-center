@@ -272,7 +272,7 @@ export const TeacherPortal: React.FC = () => {
                 </tr>
               ) : (
                 filteredStudents.map((std) => {
-                  const char = CHARACTERS.find((c) => c.id === std.equippedCharacterId) || CHARACTERS[0];
+                  const char = CHARACTERS.find((c) => c.id === std.equippedCharacterId);
                   return (
                     <tr key={std.id} className="hover:bg-amber-50/50 transition-colors">
                       {/* Student Info */}
@@ -291,14 +291,14 @@ export const TeacherPortal: React.FC = () => {
                           <div className="w-7 h-7 rounded-lg border border-neutral-900 overflow-hidden shrink-0 bg-neutral-900">
                             <img
                               src={getPlayerPhotoUrl(char)}
-                              alt={char.name}
+                              alt={char?.name || 'No player equipped'}
                               className="w-full h-full object-cover object-top"
                               onError={(e) => {
                                 (e.target as HTMLImageElement).src = '/images/players/kane-9.jpg';
                               }}
                             />
                           </div>
-                          <span className="font-black text-neutral-800">{char.name}</span>
+                          <span className="font-black text-neutral-800">{char?.name || 'No player equipped'}</span>
                         </div>
                       </td>
 
