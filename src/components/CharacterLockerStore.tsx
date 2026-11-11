@@ -11,10 +11,10 @@ export const CharacterLockerStore: React.FC = () => {
   const { user, unlockCharacter, equipCharacter } = useAuth();
 
   const [selectedCharId, setSelectedCharId] = useState<string>(
-    user?.equippedCharacterId || 'kane-9'
+    user?.equippedCharacterId || 'yamal-19'
   );
 
-  const selectedChar = CHARACTERS.find((c) => c.id === selectedCharId) || CHARACTERS[0];
+  const selectedChar = CHARACTERS.find((c) => c.id === selectedCharId) || CHARACTERS.find((c) => c.id === 'yamal-19') || CHARACTERS[0];
 
   const handleBuyOrEquipChar = (char: CharacterItem) => {
     sounds.playKeyClick();
