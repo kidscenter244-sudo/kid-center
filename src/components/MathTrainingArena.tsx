@@ -150,52 +150,6 @@ export const MathTrainingArena: React.FC<MathTrainingArenaProps> = ({ onStartQui
       {/* Active Equipped Player Card */}
       <div className="bg-white border-2 border-neutral-900 rounded-3xl p-4 sm:p-5 shadow-[0_6px_0_0_#171717] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-2 border-neutral-900 overflow-hidden bg-neutral-900 shadow-sm shrink-0">
-            <img
-              src={getPlayerPhotoUrl(equippedHero)}
-              alt={equippedHero.name}
-              className="w-full h-full object-cover object-top"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = '/images/players/kane-9.jpg';
-              }}
-            />
-            {equippedHero.hasBallonDor && (
-              <span className="absolute bottom-0 right-0 bg-amber-400 text-neutral-950 text-[10px] font-black px-1 rounded-tl border-t border-l border-neutral-900">
-                🏆
-              </span>
-            )}
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black uppercase text-amber-700 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-md">
-                Your Equipped Champion
-              </span>
-              <span className="text-[11px] font-mono font-bold text-neutral-500">
-                {equippedHero.tier}
-              </span>
-            </div>
-            <h2 className="text-base sm:text-lg font-black text-neutral-900 mt-0.5 leading-tight">
-              {equippedHero.name}
-            </h2>
-            {equippedHero.ballonDorPower ? (
-              <p className="text-xs font-bold text-neutral-600 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                <span className="text-neutral-500 font-semibold">Special Perk:</span>
-                <span className="text-amber-800 font-black">{equippedHero.ballonDorPower.name}</span>
-                <span className="text-[10px] bg-amber-50 text-amber-900 border border-amber-300 px-1.5 py-0.2 rounded font-mono">
-                  {equippedHero.ballonDorPower.badge}
-                </span>
-              </p>
-            ) : (
-              <p className="text-xs font-semibold text-neutral-500 mt-0.5">
-                Standard Champion • Ready for Math Challenges
-              </p>
-            )}
-          </div>
-        </div>
-
-      {/* Active Equipped Player Card */}
-      <div className="bg-white border-2 border-neutral-900 rounded-3xl p-4 sm:p-5 shadow-[0_6px_0_0_#171717] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
           {equippedHero ? (
             <>
               <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl border-2 border-neutral-900 overflow-hidden bg-neutral-900 shadow-sm shrink-0">
