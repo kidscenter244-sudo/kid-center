@@ -314,7 +314,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const parsed: UserAccount = JSON.parse(decodeURIComponent(atob(code.trim())));
       if (!parsed.email) return { success: false, message: 'Invalid code.' };
       saveUser(parsed); return { success: true, message: `Loaded profile: ${parsed.nickname}` };
-    } catch { return { success: false, message: 'Invalid code format.' };
+    } catch { return { success: false, message: 'Invalid code format.' }; }
   };
 
   const awardStudentCoins = async (studentId: string, amount: number) => {
