@@ -122,15 +122,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (cached) {
         const parsed = JSON.parse(cached) as UserAccount;
         if (parsed?.email?.toLowerCase() === email.toLowerCase()) {
-          const migrationKey = `kids_center_no_free_yamal_v1_${email.toLowerCase()}`;
-          if (localStorage.getItem(migrationKey) !== 'done') {
-            parsed.unlockedCharacters = (parsed.unlockedCharacters || []).filter(id => id !== 'yamal-19');
-            if (parsed.equippedCharacterId === 'yamal-19') {
-              parsed.equippedCharacterId = parsed.unlockedCharacters[0] || '';
-            }
-            localStorage.setItem(`kids_center_user_${email.toLowerCase()}`, JSON.stringify(parsed));
-            localStorage.setItem(migrationKey, 'done');
-          }
+          // Keep every previously purchased character, including Lamine Yamal.
+          // New accounts start with an empty collection in DEFAULT_USER/register.
           cachedProfile = parsed;
         }
       }
