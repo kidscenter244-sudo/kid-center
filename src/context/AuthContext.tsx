@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { UserAccount, QuizSessionSummary, StudentRosterRecord } from '../types';
 import { CHARACTERS } from '../data/characters';
 import { supabase } from '../lib/supabase';
@@ -8,7 +8,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isTeacher: boolean;
   login: (email: string, pass: string) => Promise<{ success: boolean; message: string }>;
-  teacherLogin: (passcode: string) => { success: boolean; message: string };
+  teacherLogin: (passcode: string) => Promise<{ success: boolean; message: string }>;
   register: (email: string, pass: string, nickname: string) => Promise<{ success: boolean; message: string }>;
   loginGuest: () => void;
   logout: () => void;
@@ -22,7 +22,8 @@ interface AuthContextType {
   closeAuthModal: () => void;
   isAuthModalOpen: boolean;
   studentRoster: StudentRosterRecord[];
-  awardStudentCoins: (studentId: string, amount: number) => void;
+  refreshStudentRoster: () => Promise<void>;
+  awardStudentCoins: (studentId: string, amount: number) => Promise<void>;
 }
 
 const DEFAULT_USER: UserAccount = {
@@ -38,15 +39,31 @@ const mapProfile = (row: any, email: string): UserAccount => ({
   coins: Number(row.coins ?? 450),
   unlockedCharacters: Array.isArray(row.unlocked_characters) && row.unlocked_characters.length ? row.unlocked_characters : ['yamal-19'],
   equippedCharacterId: row.equipped_character_id || 'yamal-19',
-  stats: row.stats || { totalSolved: 0, totalCorrect: 0, totalCoinsEarned: 450, bestStreak: 0 },
+  stats: {
+    totalSolved: 0, totalCorrect: 0, totalCoinsEarned: 450, bestStreak: 0,
+    ...(row.stats && typeof row.stats === 'object' ? row.stats : {})
+  },
   history: Array.isArray(row.history) ? row.history : []
 });
 
-const loadRealStudentsRoster = (): StudentRosterRecord[] => {
-  try {
-    const stored = localStorage.getItem('kids_center_roster');
-    return stored ? JSON.parse(stored) : [];
-  } catch { return []; }
+const mapRosterRow = (row: any): StudentRosterRecord => {
+  const stats = row.stats || {};
+  const totalSolved = Number(row.total_solved ?? stats.totalSolved ?? 0);
+  const totalCorrect = Number(row.total_correct ?? stats.totalCorrect ?? 0);
+  return {
+    id: String(row.id),
+    name: row.nickname || 'Math Champion',
+    email: row.email || '',
+    grade: 'Active Player',
+    coins: Number(row.coins ?? 0),
+    totalSolved,
+    totalCorrect,
+    accuracy: Number(row.accuracy ?? (totalSolved ? Math.round(totalCorrect / totalSolved * 100) : 100)),
+    bestStreak: Number(row.best_streak ?? stats.bestStreak ?? 0),
+    equippedCharacterId: row.equipped_character_id || 'yamal-19',
+    unlockedCount: Number(row.unlocked_count ?? (row.unlocked_characters || []).length ?? 1),
+    lastActive: row.updated_at || 'Recently active'
+  };
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -54,8 +71,44 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserAccount | null>(null);
   const [authUserId, setAuthUserId] = useState<string | null>(null);
+  const [teacherPasscode, setTeacherPasscode] = useState<string | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [studentRoster, setStudentRoster] = useState<StudentRosterRecord[]>(() => loadRealStudentsRoster());
+  const [studentRoster, setStudentRoster] = useState<StudentRosterRecord[]>([]);
+  const pendingSave = useRef<Promise<void>>(Promise.resolve());
+
+  const refreshStudentRoster = async () => {
+    const { data, error } = await supabase.rpc('get_public_leaderboard');
+    if (error) {
+      console.error('Could not load Supabase leaderboard:', error.message);
+      throw error;
+    }
+    setStudentRoster((data || []).map(mapRosterRow));
+  };
+
+  const loadTeacherRoster = async (passcode: string) => {
+    const { data, error } = await supabase.rpc('teacher_get_roster', { p_passcode: passcode });
+    if (error) throw error;
+    setStudentRoster((data || []).map(mapRosterRow));
+  };
+
+  const persistProfile = async (authId: string, profile: UserAccount) => {
+    const { error } = await supabase.from('profiles').upsert({
+      id: authId,
+      email: profile.email,
+      nickname: profile.nickname,
+      role: 'student',
+      coins: profile.coins,
+      unlocked_characters: profile.unlockedCharacters,
+      equipped_character_id: profile.equippedCharacterId,
+      stats: profile.stats,
+      history: profile.history,
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'id' });
+    if (error) {
+      console.error('Supabase profile save failed:', error.message);
+      throw error;
+    }
+  };
 
   const loadCloudProfile = async (authId: string, email: string) => {
     const { data, error } = await supabase.from('profiles').select('*').eq('id', authId).maybeSingle();
@@ -74,25 +127,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const persistProfile = async (authId: string, profile: UserAccount) => {
-    const { error } = await supabase.from('profiles').upsert({
-      id: authId,
-      email: profile.email,
-      nickname: profile.nickname,
-      role: profile.role,
-      coins: profile.coins,
-      unlocked_characters: profile.unlockedCharacters,
-      equipped_character_id: profile.equippedCharacterId,
-      stats: profile.stats,
-      history: profile.history,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'id' });
-    if (error) {
-      console.error('Supabase profile save failed:', error.message);
-      throw error;
-    }
-  };
-
   useEffect(() => {
     let alive = true;
     supabase.auth.getSession().then(async ({ data, error }) => {
@@ -100,17 +134,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) { console.error(error); return; }
       const session = data.session;
       if (session?.user.email) {
-        try { await loadCloudProfile(session.user.id, session.user.email); }
-        catch (e) { console.error('Could not load player profile:', e); }
+        try {
+          await loadCloudProfile(session.user.id, session.user.email);
+          await refreshStudentRoster();
+        } catch (e) { console.error('Could not restore cloud player data:', e); }
       }
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!alive) return;
       if (session?.user.email) {
-        window.setTimeout(() => {
-          if (alive) loadCloudProfile(session.user.id, session.user.email!).catch(e => console.error(e));
+        window.setTimeout(async () => {
+          if (!alive) return;
+          try {
+            await loadCloudProfile(session.user.id, session.user.email!);
+            await refreshStudentRoster();
+          } catch (e) { console.error('Could not sync signed-in player:', e); }
         }, 0);
-      } else {
+      } else if (!teacherPasscode) {
         setAuthUserId(null);
         setUser(null);
       }
@@ -123,23 +163,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       localStorage.setItem(`kids_center_user_${updated.email}`, JSON.stringify(updated));
       if (updated.role !== 'teacher') localStorage.setItem('kids_center_active_email', updated.email);
-      if (updated.role === 'student') {
-        setStudentRoster(prev => {
-          const record: StudentRosterRecord = {
-            id: updated.email, name: updated.nickname, email: updated.email, grade: 'Active Player',
-            coins: updated.coins, totalSolved: updated.stats.totalSolved, totalCorrect: updated.stats.totalCorrect,
-            accuracy: updated.stats.totalSolved ? Math.round(updated.stats.totalCorrect / updated.stats.totalSolved * 100) : 100,
-            bestStreak: updated.stats.bestStreak, equippedCharacterId: updated.equippedCharacterId,
-            unlockedCount: updated.unlockedCharacters.length, lastActive: 'Just now'
-          };
-          const next = [record, ...prev.filter(s => s.email.toLowerCase() !== updated.email.toLowerCase())];
-          localStorage.setItem('kids_center_roster', JSON.stringify(next));
-          return next;
-        });
-      }
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error('Local cache update failed:', e); }
+
     if (authUserId && updated.role === 'student') {
-      void persistProfile(authUserId, updated).catch(e => console.error('Could not sync player progress:', e));
+      const id = authUserId;
+      // Serialize writes so a fast sequence of purchases/rewards cannot overwrite newer data with an older snapshot.
+      pendingSave.current = pendingSave.current
+        .catch(() => undefined)
+        .then(() => persistProfile(id, updated))
+        .then(() => refreshStudentRoster())
+        .catch(e => console.error('Could not sync player progress to Supabase:', e));
     }
   };
 
@@ -151,6 +184,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!data.user?.email) return { success: false, message: 'Could not verify your account.' };
     try {
       await loadCloudProfile(data.user.id, data.user.email);
+      await refreshStudentRoster();
       setIsAuthModalOpen(false);
       return { success: true, message: `Welcome back, ${cleanEmail}!` };
     } catch (e: any) {
@@ -168,20 +202,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     if (error) return { success: false, message: error.message };
     if (!data.session || !data.user) {
-      return { success: false, message: 'Account created. Please confirm your email, then sign in. To enable instant access, turn off email confirmations in Supabase Authentication settings.' };
+      return { success: false, message: 'Account created. Please sign in after confirming your email if confirmation is enabled.' };
     }
     try {
-      // Preserve progress from this browser's legacy local account when the player re-registers.
       let legacyProfile: UserAccount | null = null;
       try {
         const legacy = localStorage.getItem(`kids_center_user_${cleanEmail}`);
         if (legacy) legacyProfile = JSON.parse(legacy) as UserAccount;
-      } catch { /* Ignore malformed legacy cache and start a clean profile. */ }
+      } catch { /* Ignore malformed legacy cache. */ }
       const newProfile: UserAccount = legacyProfile ? {
-        ...legacyProfile,
-        email: cleanEmail,
-        nickname: cleanNickname || legacyProfile.nickname,
-        role: 'student'
+        ...legacyProfile, email: cleanEmail, nickname: cleanNickname || legacyProfile.nickname, role: 'student'
       } : {
         email: cleanEmail, nickname: cleanNickname, role: 'student', coins: 450,
         unlockedCharacters: ['yamal-19'], equippedCharacterId: 'yamal-19',
@@ -190,6 +220,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await persistProfile(data.user.id, newProfile);
       setAuthUserId(data.user.id);
       setUser(newProfile);
+      await refreshStudentRoster();
       setIsAuthModalOpen(false);
       return { success: true, message: `Welcome, ${cleanNickname}!` };
     } catch (e: any) {
@@ -197,72 +228,111 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const teacherLogin = (passcode: string) => {
-    if (['01068545095', '1234'].includes(passcode.trim())) {
+  const teacherLogin = async (passcode: string) => {
+    const cleanPasscode = passcode.trim();
+    if (!cleanPasscode) return { success: false, message: 'Enter the teacher passcode.' };
+    try {
+      await loadTeacherRoster(cleanPasscode);
+      setTeacherPasscode(cleanPasscode);
       const teacher: UserAccount = {
         email: 'teacher@kidscenter.com', nickname: 'Coach Ahmed (Teacher)', role: 'teacher',
         coins: 99999, unlockedCharacters: CHARACTERS.map(c => c.id), equippedCharacterId: 'messi-10',
         stats: { totalSolved: 999, totalCorrect: 999, totalCoinsEarned: 99999, bestStreak: 100 }, history: []
       };
-      setUser(teacher); setAuthUserId(null); setIsAuthModalOpen(false);
+      setUser(teacher);
+      setAuthUserId(null);
+      setIsAuthModalOpen(false);
       return { success: true, message: 'Teacher Portal Access Granted!' };
+    } catch (e: any) {
+      return { success: false, message: e?.message || 'Teacher access failed. Check the passcode and database setup.' };
     }
-    return { success: false, message: 'Incorrect teacher passcode!' };
   };
 
-  const loginGuest = () => { setAuthUserId(null); setUser(DEFAULT_USER); setIsAuthModalOpen(false); };
-  const logout = () => {
-    void supabase.auth.signOut();
-    setAuthUserId(null); setUser(null); setIsAuthModalOpen(false);
-    localStorage.removeItem('kids_center_active_email');
-    localStorage.removeItem('kids_center_passed_gate');
+  const loginGuest = () => {
+    setAuthUserId(null); setTeacherPasscode(null); setUser(DEFAULT_USER); setIsAuthModalOpen(false);
   };
+
+  const logout = () => {
+    void (async () => {
+      try { await pendingSave.current; } catch (e) { console.error(e); }
+      await supabase.auth.signOut();
+      setAuthUserId(null); setTeacherPasscode(null); setUser(null); setIsAuthModalOpen(false);
+      localStorage.removeItem('kids_center_active_email');
+      localStorage.removeItem('kids_center_passed_gate');
+    })();
+  };
+
   const addCoins = (amount: number) => {
-    if (!user) return;
+    if (!user || user.role !== 'student') return;
     saveUser({ ...user, coins: Math.max(0, user.coins + amount), stats: {
       ...user.stats, totalCoinsEarned: amount > 0 ? user.stats.totalCoinsEarned + amount : user.stats.totalCoinsEarned
     }});
   };
+
   const unlockCharacter = (characterId: string, price: number) => {
-    if (!user || user.unlockedCharacters.includes(characterId) || user.coins < price) return !!user?.unlockedCharacters.includes(characterId);
+    if (!user || user.role !== 'student' || user.unlockedCharacters.includes(characterId) || user.coins < price) {
+      return !!user?.unlockedCharacters.includes(characterId);
+    }
     saveUser({ ...user, coins: user.coins - price, unlockedCharacters: [...user.unlockedCharacters, characterId], equippedCharacterId: characterId });
     return true;
   };
+
   const equipCharacter = (characterId: string) => {
-    if (user?.unlockedCharacters.includes(characterId)) saveUser({ ...user, equippedCharacterId: characterId });
+    if (user?.role === 'student' && user.unlockedCharacters.includes(characterId)) {
+      saveUser({ ...user, equippedCharacterId: characterId });
+    }
   };
+
   const saveSession = (session: QuizSessionSummary) => {
-    if (!user) return;
+    if (!user || user.role !== 'student') return;
+    let currentRun = 0;
+    let sessionBestStreak = 0;
+    for (const problem of session.problems || []) {
+      if (problem.isCorrect) {
+        currentRun += 1;
+        sessionBestStreak = Math.max(sessionBestStreak, currentRun);
+      } else {
+        currentRun = 0;
+      }
+    }
     saveUser({ ...user, coins: user.coins + session.coinsEarned, stats: {
+      ...user.stats,
       totalSolved: user.stats.totalSolved + session.totalQuestions,
       totalCorrect: user.stats.totalCorrect + session.correctAnswers,
       totalCoinsEarned: user.stats.totalCoinsEarned + session.coinsEarned,
-      bestStreak: Math.max(user.stats.bestStreak, session.correctAnswers)
-    }, history: [session, ...user.history.slice(0, 19)] });
+      bestStreak: Math.max(user.stats.bestStreak, sessionBestStreak)
+    }, history: [session, ...user.history].slice(0, 100) });
   };
+
   const exportSyncCode = () => {
     if (!user) return '';
     try { return btoa(encodeURIComponent(JSON.stringify(user))); } catch { return ''; }
   };
+
   const importSyncCode = (code: string) => {
     try {
       const parsed: UserAccount = JSON.parse(decodeURIComponent(atob(code.trim())));
       if (!parsed.email) return { success: false, message: 'Invalid code.' };
       saveUser(parsed); return { success: true, message: `Loaded profile: ${parsed.nickname}` };
-    } catch { return { success: false, message: 'Invalid code format.' }; }
+    } catch { return { success: false, message: 'Invalid code format.' };
   };
-  const awardStudentCoins = (studentId: string, amount: number) => {
-    setStudentRoster(prev => {
-      const next = prev.map(s => s.id === studentId ? { ...s, coins: s.coins + amount } : s);
-      localStorage.setItem('kids_center_roster', JSON.stringify(next)); return next;
+
+  const awardStudentCoins = async (studentId: string, amount: number) => {
+    if (!teacherPasscode) throw new Error('Teacher session expired. Please sign in again.');
+    const safeAmount = Math.max(1, Math.min(10000, Math.floor(amount)));
+    const { error } = await supabase.rpc('teacher_award_coins', {
+      p_passcode: teacherPasscode, p_student_id: studentId, p_amount: safeAmount
     });
+    if (error) throw error;
+    await loadTeacherRoster(teacherPasscode);
   };
 
   return <AuthContext.Provider value={{
     user, isAuthenticated: !!user && user.email !== DEFAULT_USER.email, isTeacher: user?.role === 'teacher',
     login, teacherLogin, register, loginGuest, logout, addCoins, unlockCharacter, equipCharacter, saveSession,
     exportSyncCode, importSyncCode, openAuthModal: () => setIsAuthModalOpen(true),
-    closeAuthModal: () => setIsAuthModalOpen(false), isAuthModalOpen, studentRoster, awardStudentCoins
+    closeAuthModal: () => setIsAuthModalOpen(false), isAuthModalOpen, studentRoster,
+    refreshStudentRoster, awardStudentCoins
   }}>{children}</AuthContext.Provider>;
 };
 
