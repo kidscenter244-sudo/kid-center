@@ -171,7 +171,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: false, message: 'Account created. Please confirm your email, then sign in. To enable instant access, turn off email confirmations in Supabase Authentication settings.' };
     }
     try {
-      const newProfile: UserAccount = {
+      // Preserve progress from this browser's legacy local account when the player re-registers.
+      let legacyProfile: UserAccount | null = null;
+      try {
+        const legacy = localStorage.getItem(`kids_center_user_${cleanEmail}`);
+        if (legacy) legacyProfile = JSON.parse(legacy) as UserAccount;
+      } catch { /* Ignore malformed legacy cache and start a clean profile. */ }
+      const newProfile: UserAccount = legacyProfile ? {
+        ...legacyProfile,
+        email: cleanEmail,
+        nickname: cleanNickname || legacyProfile.nickname,
+        role: 'student'
+      } : {
         email: cleanEmail, nickname: cleanNickname, role: 'student', coins: 450,
         unlockedCharacters: ['yamal-19'], equippedCharacterId: 'yamal-19',
         stats: { totalSolved: 0, totalCorrect: 0, totalCoinsEarned: 450, bestStreak: 0 }, history: []
