@@ -28,7 +28,7 @@ interface AuthContextType {
 
 const DEFAULT_USER: UserAccount = {
   email: 'champion@kidscenter.com', nickname: 'Math Champion', role: 'student',
-  coins: 450, unlockedCharacters: ['yamal-19'], equippedCharacterId: 'yamal-19',
+  coins: 450, unlockedCharacters: [], equippedCharacterId: '',
   stats: { totalSolved: 0, totalCorrect: 0, totalCoinsEarned: 450, bestStreak: 0 }, history: []
 };
 
@@ -37,8 +37,10 @@ const mapProfile = (row: any, email: string): UserAccount => ({
   nickname: row.nickname || email.split('@')[0],
   role: row.role === 'teacher' ? 'teacher' : 'student',
   coins: Number(row.coins ?? 450),
-  unlockedCharacters: Array.isArray(row.unlocked_characters) && row.unlocked_characters.length ? row.unlocked_characters : ['yamal-19'],
-  equippedCharacterId: row.equipped_character_id || 'yamal-19',
+  unlockedCharacters: Array.isArray(row.unlocked_characters) ? row.unlocked_characters.filter((id: string) => id !== 'yamal-19') : [],
+  equippedCharacterId: row.equipped_character_id && row.equipped_character_id !== 'yamal-19' && (row.unlocked_characters || []).includes(row.equipped_character_id)
+    ? row.equipped_character_id
+    : (Array.isArray(row.unlocked_characters) ? row.unlocked_characters.find((id: string) => id !== 'yamal-19') || '' : ''),
   stats: {
     totalSolved: 0, totalCorrect: 0, totalCoinsEarned: 450, bestStreak: 0,
     ...(row.stats && typeof row.stats === 'object' ? row.stats : {})
@@ -60,7 +62,7 @@ const mapRosterRow = (row: any): StudentRosterRecord => {
     totalCorrect,
     accuracy: Number(row.accuracy ?? (totalSolved ? Math.round(totalCorrect / totalSolved * 100) : 100)),
     bestStreak: Number(row.best_streak ?? stats.bestStreak ?? 0),
-    equippedCharacterId: row.equipped_character_id || 'yamal-19',
+    equippedCharacterId: row.equipped_character_id || '',
     unlockedCount: Number(row.unlocked_count ?? (row.unlocked_characters || []).length ?? 1),
     lastActive: row.updated_at || 'Recently active'
   };
@@ -129,8 +131,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     let profile = cloudProfile;
     if (cachedProfile) {
-      const cloudCharacters = cloudProfile.unlockedCharacters || ['yamal-19'];
-      const localCharacters = cachedProfile.unlockedCharacters || ['yamal-19'];
+      const cloudCharacters = (cloudProfile.unlockedCharacters || []).filter(id => id !== 'yamal-19');
+      const localCharacters = (cachedProfile.unlockedCharacters || []).filter(id => id !== 'yamal-19');
       const restoreLocalWallet = localCharacters.length > cloudCharacters.length;
       const mergedStats = {
         totalSolved: Math.max(cloudProfile.stats.totalSolved || 0, cachedProfile.stats?.totalSolved || 0),
@@ -147,7 +149,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         unlockedCharacters: Array.from(new Set([...cloudCharacters, ...localCharacters])),
         equippedCharacterId: localCharacters.includes(cachedProfile.equippedCharacterId)
           ? cachedProfile.equippedCharacterId
-          : cloudProfile.equippedCharacterId,
+          : (cloudCharacters.includes(cloudProfile.equippedCharacterId) ? cloudProfile.equippedCharacterId : (cloudCharacters[0] || localCharacters[0] || '')),
         stats: mergedStats,
         history: mergedHistory
       };
@@ -250,7 +252,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ...legacyProfile, email: cleanEmail, nickname: cleanNickname || legacyProfile.nickname, role: 'student'
       } : {
         email: cleanEmail, nickname: cleanNickname, role: 'student', coins: 450,
-        unlockedCharacters: ['yamal-19'], equippedCharacterId: 'yamal-19',
+        unlockedCharacters: [], equippedCharacterId: '',
         stats: { totalSolved: 0, totalCorrect: 0, totalCoinsEarned: 450, bestStreak: 0 }, history: []
       };
       await persistProfile(data.user.id, newProfile);
