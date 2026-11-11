@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { sounds } from '../utils/audio';
 import { CHARACTERS, getPlayerPhotoUrl } from '../data/characters';
@@ -19,7 +19,7 @@ import {
 import confetti from 'canvas-confetti';
 
 export const TeacherPortal: React.FC = () => {
-  const { isTeacher, teacherLogin, studentRoster, awardStudentCoins } = useAuth();
+  const { isTeacher, teacherLogin, studentRoster, awardStudentCoins, refreshStudentRoster } = useAuth();
 
   const [passcode, setPasscode] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -29,10 +29,18 @@ export const TeacherPortal: React.FC = () => {
   const [bonusAmount, setBonusAmount] = useState(100);
   const [rewardMsg, setRewardMsg] = useState('');
 
-  const handleTeacherSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (!isTeacher) return;
+    const timer = window.setInterval(() => {
+      refreshStudentRoster().catch(() => undefined);
+    }, 15000);
+    return () => window.clearInterval(timer);
+  }, [isTeacher, refreshStudentRoster]);
+
+  const handleTeacherSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     sounds.playKeyClick();
-    const res = teacherLogin(passcode);
+    const res = await teacherLogin(passcode);
     if (!res.success) {
       setLoginError(res.message);
     } else {
@@ -41,19 +49,19 @@ export const TeacherPortal: React.FC = () => {
     }
   };
 
-  const handleAwardCoins = (studentId: string) => {
+  const handleAwardCoins = async (studentId: string) => {
     sounds.playKeyClick();
-    awardStudentCoins(studentId, bonusAmount);
-    sounds.playCoin();
-    setRewardMsg(`Awarded +${bonusAmount} 🪙 coins to student!`);
     try {
-      confetti({
-        particleCount: 40,
-        spread: 50,
-        origin: { y: 0.6 }
-      });
-    } catch {}
-    setTimeout(() => setRewardMsg(''), 2500);
+      await awardStudentCoins(studentId, bonusAmount);
+      sounds.playCoin();
+      setRewardMsg(`Awarded +${bonusAmount} 🪙 coins to student and saved to Supabase!`);
+      try {
+        confetti({ particleCount: 40, spread: 50, origin: { y: 0.6 } });
+      } catch {}
+    } catch (error: any) {
+      setRewardMsg(error?.message || 'Could not save the reward. Please try again.');
+    }
+    setTimeout(() => setRewardMsg(''), 3500);
   };
 
   // If not logged in as teacher, display the Teacher Access Gate

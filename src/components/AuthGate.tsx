@@ -50,11 +50,11 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
     }
   };
 
-  const handleTeacherSubmit = (e: React.FormEvent) => {
+  const handleTeacherSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     sounds.playKeyClick();
     setErrorMsg('');
-    const res = teacherLogin(teacherPasscode);
+    const res = await teacherLogin(teacherPasscode);
     if (!res.success) {
       setErrorMsg(res.message);
       sounds.playWrong();
