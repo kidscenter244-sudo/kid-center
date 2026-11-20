@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { AuthGate } from './components/AuthGate';
 import { CinematicIntroSplash } from './components/CinematicIntroSplash';
 import { Navbar, AppNavTab } from './components/Navbar';
@@ -31,6 +32,7 @@ import { sounds } from './utils/audio';
 
 function MainAppContent() {
   const { user, saveSession, isTeacher, logout } = useAuth();
+  const { lang, toggleLang, t } = useLanguage();
 
   // Authentication gate state: persists cleanly across page reloads
   const [hasPassedAuthGate, setHasPassedAuthGate] = useState<boolean>(() => {
@@ -132,11 +134,14 @@ function MainAppContent() {
                     Kids Center Pro Games
                   </h1>
                   <span className="px-2 py-0.5 bg-amber-400 text-neutral-900 rounded font-black text-[10px] uppercase">
-                    Teacher Mode
+                    {t('Teacher Mode', 'وضع المعلم')}
                   </span>
                 </div>
                 <span className="text-[11px] font-semibold text-neutral-400">
-                  Coach Portal • Real Live Student Accuracy & Stats Monitor
+                  {t(
+                    'Coach Portal • Real Live Student Accuracy & Stats Monitor',
+                    'بوابة المدرب • متابعة دقة وإحصائيات الطلاب مباشرة'
+                  )}
                 </span>
               </div>
             </div>
@@ -145,12 +150,21 @@ function MainAppContent() {
               <button
                 onClick={() => {
                   sounds.playKeyClick();
+                  toggleLang();
+                }}
+                className="px-3 py-2 bg-neutral-800 hover:bg-neutral-700 text-amber-300 border-2 border-neutral-700 rounded-xl text-xs font-black cursor-pointer transition-all"
+              >
+                {lang === 'en' ? '🌐 عربي' : '🌐 EN'}
+              </button>
+              <button
+                onClick={() => {
+                  sounds.playKeyClick();
                   logout();
                 }}
                 className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white border-2 border-neutral-900 rounded-xl text-xs font-black cursor-pointer shadow-[0_2px_0_0_#000000] active:translate-y-0.5 transition-all flex items-center gap-1.5"
-                title="Log Out and return to initial login screen"
+                title={t('Log Out and return to initial login screen', 'تسجيل الخروج')}
               >
-                <span>🚪 Log Out</span>
+                <span>🚪 {t('Log Out', 'خروج')}</span>
               </button>
             </div>
           </div>
@@ -227,8 +241,10 @@ function MainAppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <MainAppContent />
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <MainAppContent />
+      </AuthProvider>
+    </LanguageProvider>
   );
 }

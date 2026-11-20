@@ -1518,10 +1518,80 @@ export const getPlayerPhotoUrl = (char?: { id: string; photoUrl?: string } | nul
   return char.photoUrl || `/images/players/${char.id}.jpg`;
 };
 
-export const CHARACTERS: (CharacterItem & { robloxConfig?: any })[] = RAW_CHARACTERS.map((c) => ({
-  ...c,
-  photoUrl: c.photoUrl || `/images/players/${c.id}.jpg`
-}));
+const RAISED_PLAYER_PRICES: Record<string, number> = {
+  // Tier 1: Rising & Defensive Stars (8,000 - 14,000)
+  'saliba-2': 8000,
+  'alisson-1': 8500,
+  'dembele-10': 9000,
+  'courtois-1': 9500,
+  'rice-41': 10000,
+  'griezmann-7': 10500,
+  'davies-19': 11000,
+  'macallister-10': 11500,
+  'rodrygo-11': 12000,
+  'son-7': 12500,
+  'hakimi-2': 13000,
+  'vandijk-4': 13500,
+  'gavi-6': 14000,
+
+  // Tier 2: Epic Superstars (14,500 - 22,000)
+  'martinez-23': 14500,
+  'pedri-8': 15000,
+  'bruno-8': 15500,
+  'wirtz-10': 16000,
+  'musiala-42': 16500,
+  'osimhen-45': 17000,
+  'saka-7': 17500,
+  'valverde-15': 18000,
+  'foden-47': 18500,
+  'alvarez-19': 19000,
+  'gvardiol-24': 19500,
+  'palmer-20': 20000,
+  'lewandowski-9': 21000,
+  'camavinga-12': 22000,
+
+  // Tier 3: Legendary Icons & Wonderkid (24,000 - 44,000)
+  'bernardo-20': 24000,
+  'debruyne-17': 25500,
+  'lautaro-10': 27000,
+  'salah-11': 28500,
+  'bellingham-5': 30000,
+  'kimmich-6': 31500,
+  'neymar-10': 33000,
+  'dias-3': 34500,
+  'vinicius-7': 36000,
+  'haaland-9': 37500,
+  'neuer-1': 39000,
+  'mbappe-9': 41000,
+  'yamal-19': 44000,
+
+  // Tier 4: All-Time Greats & Ballon d'Or Champions (48,000 - 175,000)
+  'maradona-10': 48000,
+  'pele-10': 52000,
+  'kane-9': 56000,
+  'rodri-16': 62000,
+  'rivaldo-10': 68000,
+  'cannavaro-5': 74000,
+  'benzema-9': 80000,
+  'nedved-11': 86000,
+  'modric-10': 92000,
+  'kaka-22': 98000,
+  'zidane-10': 106000,
+  'ronaldinho-10': 115000,
+  'vanbasten-9': 124000,
+  'ronaldo-r9': 134000,
+  'cruyff-14': 145000,
+  'messi-10': 160000,
+  'ronaldo-7': 175000
+};
+
+export const CHARACTERS: (CharacterItem & { robloxConfig?: any })[] = RAW_CHARACTERS
+  .map((c) => ({
+    ...c,
+    price: RAISED_PLAYER_PRICES[c.id] ?? Math.round(c.price * 2),
+    photoUrl: c.photoUrl || `/images/players/${c.id}.jpg`
+  }))
+  .sort((a, b) => a.price - b.price);
 
 export const STAGES: StageEnvironment[] = [
   {

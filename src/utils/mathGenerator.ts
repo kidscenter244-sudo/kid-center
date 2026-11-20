@@ -6,8 +6,8 @@ import {
   MixedSettings
 } from '../types';
 
-function getRandomInt(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+function roundTo(val: number, places: number): number {
+  return Number(val.toFixed(places));
 }
 
 function getRandomIntWithDigits(digits: number): number {
@@ -19,6 +19,14 @@ function getRandomIntWithDigits(digits: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function getRandomNonZeroEndingInt(digits: number): number {
+  const n = getRandomIntWithDigits(digits);
+  if (n % 10 === 0) {
+    return n + (Math.floor(Math.random() * 9) + 1);
+  }
+  return n;
+}
+
 function isDirectAdd(currentDigit: number, addDigit: number): boolean {
   if (addDigit < 0 || addDigit > 9) return false;
   const lowerBeads = currentDigit % 5;
@@ -26,7 +34,7 @@ function isDirectAdd(currentDigit: number, addDigit: number): boolean {
   if (addDigit < 5) {
     return lowerBeads + addDigit <= 4;
   }
-  return upperBead === 0 && (lowerBeads + (addDigit - 5)) <= 4;
+  return upperBead === 0 && lowerBeads + (addDigit - 5) <= 4;
 }
 
 function isDirectSub(currentDigit: number, subDigit: number): boolean {
@@ -36,7 +44,7 @@ function isDirectSub(currentDigit: number, subDigit: number): boolean {
   if (subDigit < 5) {
     return lowerBeads >= subDigit;
   }
-  return upperBead === 1 && lowerBeads >= (subDigit - 5);
+  return upperBead === 1 && lowerBeads >= subDigit - 5;
 }
 
 function isFriend5Add(currentDigit: number, addDigit: number): boolean {
@@ -66,7 +74,12 @@ function getDigitArray(num: number, len: number): number[] {
 
 export function generateAddSubProblem(settings: AddSubSettings, index: number): MathProblem {
   const count = Math.max(2, settings.numbersCount || 3);
-  const digits = Math.max(1, settings.digitsCount || 1);
+  const hasDecimals = Boolean(settings.hasDecimals);
+  const dp = hasDecimals ? Math.max(1, Math.min(3, settings.decimalPlaces || 1)) : 0;
+  const scale = Math.pow(10, dp);
+
+  const wholeDigits = Math.max(1, settings.digitsCount || 1);
+  const digits = wholeDigits + dp;
   const formulaMode = settings.formulaMode || 'simple';
 
   const terms: number[] = [];
@@ -78,7 +91,6 @@ export function generateAddSubProblem(settings: AddSubSettings, index: number): 
       for (let p = 0; p < digits; p++) {
         let d = 0;
         if (formulaMode === 'friends-5') {
-          // In formulas of 5, start with 1, 2, 3, or 4 so 5-friend addition can be used
           d = Math.floor(Math.random() * 4) + 1;
         } else {
           d = Math.floor(Math.random() * 9) + 1;
@@ -97,7 +109,6 @@ export function generateAddSubProblem(settings: AddSubSettings, index: number): 
     let foundTerm: number | null = null;
 
     if (formulaMode === 'simple') {
-      // Direct bead operations only (no 5-friends, no 10-friends)
       const dirs = preferSubtract ? ['sub', 'add'] : ['add', 'sub'];
       for (const dir of dirs) {
         if (dir === 'sub' && !allowSubtract) continue;
@@ -106,7 +117,8 @@ export function generateAddSubProblem(settings: AddSubSettings, index: number): 
         for (let p = 0; p < digits; p++) {
           const cd = curDigits[p];
           const valid: number[] = [];
-          for (let d = (p === 0 ? 1 : 0); d <= 9; d++) {
+          const minDigit = p === 0 || (hasDecimals && p === digits - 1) ? 1 : 0;
+          for (let d = minDigit; d <= 9; d++) {
             if (dir === 'add' && isDirectAdd(cd, d)) valid.push(d);
             if (dir === 'sub' && isDirectSub(cd, d)) valid.push(d);
           }
@@ -125,8 +137,6 @@ export function generateAddSubProblem(settings: AddSubSettings, index: number): 
         }
       }
     } else if (formulaMode === 'friends-5') {
-      // Small Friends 5-complements (+4=+5-1, +3=+5-2, +2=+5-3, +1=+5-4, -4=-5+1, etc.)
-      // Stays strictly within 0..9 per column (NO crossing 10)
       const dirs = preferSubtract ? ['sub', 'add'] : ['add', 'sub'];
       for (const dir of dirs) {
         if (dir === 'sub' && !allowSubtract) continue;
@@ -137,7 +147,8 @@ export function generateAddSubProblem(settings: AddSubSettings, index: number): 
           const cd = curDigits[p];
           const friendValids: number[] = [];
           const directValids: number[] = [];
-          for (let d = (p === 0 ? 1 : 0); d <= 9; d++) {
+          const minDigit = p === 0 || (hasDecimals && p === digits - 1) ? 1 : 0;
+          for (let d = minDigit; d <= 9; d++) {
             if (dir === 'add') {
               if (isFriend5Add(cd, d)) friendValids.push(d);
               else if (isDirectAdd(cd, d)) directValids.push(d);
@@ -165,7 +176,6 @@ export function generateAddSubProblem(settings: AddSubSettings, index: number): 
         }
       }
     } else {
-      // Big Friends (10-complements): numbers that cross 10 (+9=+10-1, +8=+10-2, etc.)
       const bigFriends = [9, 8, 7, 6, 5];
       let val = 0;
       for (let p = 0; p < digits; p++) {
@@ -173,15 +183,14 @@ export function generateAddSubProblem(settings: AddSubSettings, index: number): 
         val = val * 10 + d;
       }
       const canSub = currentSum >= val;
-      foundTerm = (canSub && Math.random() < 0.4) ? -val : val;
+      foundTerm = canSub && Math.random() < 0.4 ? -val : val;
     }
 
     if (foundTerm !== null) {
       terms.push(foundTerm);
       currentSum += foundTerm;
     } else {
-      // If boundary reached, perform a safe single-digit bead adjustment
-      const step = Math.pow(10, digits - 1);
+      const step = Math.pow(10, digits - 1) + (hasDecimals ? 1 : 0);
       if (currentSum >= 5 * step) {
         terms.push(-step);
         currentSum -= step;
@@ -192,18 +201,51 @@ export function generateAddSubProblem(settings: AddSubSettings, index: number): 
     }
   }
 
+  const finalTerms = hasDecimals ? terms.map((t) => roundTo(t / scale, dp)) : terms;
+  const finalAnswer = hasDecimals ? roundTo(currentSum / scale, dp) : currentSum;
+
   return {
     id: `addsub-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 7)}`,
     type: 'add-sub',
-    terms,
-    correctAnswer: currentSum,
-    hasDecimals: false
+    terms: finalTerms,
+    correctAnswer: finalAnswer,
+    hasDecimals,
+    decimalPlaces: dp,
+    formulaMode,
+    digitsCount: wholeDigits
   };
 }
 
 export function generateMultiplicationProblem(settings: MultiplicationSettings, index: number): MathProblem {
   const digits1 = Math.max(1, settings.digits1 || 2);
   const digits2 = Math.max(1, settings.digits2 || 1);
+  const hasDecimals = Boolean(settings.hasDecimals);
+  const dp = hasDecimals ? Math.max(1, Math.min(3, settings.decimalPlaces || 1)) : 0;
+
+  if (hasDecimals) {
+    const scale = Math.pow(10, dp);
+    // Ensure BOTH numbers have a decimal point with `dp` decimal digits
+    const totalDigits1 = Math.max(digits1 + dp, dp + 1);
+    const totalDigits2 = Math.max(digits2 + dp, dp + 1);
+    const intA = getRandomNonZeroEndingInt(totalDigits1);
+    const intB = getRandomNonZeroEndingInt(totalDigits2);
+    const numA = roundTo(intA / scale, dp);
+    const numB = roundTo(intB / scale, dp);
+    const answer = roundTo(numA * numB, dp * 2);
+
+    return {
+      id: `mult-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 7)}`,
+      type: 'multiplication',
+      numA,
+      numB,
+      symbol: '×',
+      correctAnswer: answer,
+      hasDecimals: true,
+      decimalPlaces: dp,
+      digits1,
+      digits2
+    };
+  }
 
   const numA = getRandomIntWithDigits(digits1);
   const numB = getRandomIntWithDigits(digits2);
@@ -216,13 +258,72 @@ export function generateMultiplicationProblem(settings: MultiplicationSettings, 
     numB,
     symbol: '×',
     correctAnswer: answer,
-    hasDecimals: false
+    hasDecimals: false,
+    decimalPlaces: 0,
+    digits1,
+    digits2
   };
 }
 
 export function generateDivisionProblem(settings: DivisionSettings, index: number): MathProblem {
   const dividendDigits = Math.max(2, settings.dividendDigits || 3);
   const divisorDigits = Math.max(1, Math.min(dividendDigits - 1, settings.divisorDigits || 1));
+  const hasDecimals = Boolean(settings.hasDecimals);
+  const dp = hasDecimals ? Math.max(1, Math.min(3, settings.decimalPlaces || 1)) : 0;
+
+  if (hasDecimals) {
+    const scale = Math.pow(10, dp);
+    const quotientDigits = Math.max(1, dividendDigits - divisorDigits);
+
+    // Guarantee BOTH dividend (numA) AND divisor (numB) have a decimal point,
+    // and quotient is clean & exact (no infinite repeating decimals).
+    let divisor = 1.2;
+    let quotient = 2.5;
+    let dividend = 3.0;
+
+    for (let attempt = 0; attempt < 30; attempt++) {
+      const divTotalDigits = Math.max(divisorDigits + dp, dp + 1);
+      const divisorInt = getRandomNonZeroEndingInt(divTotalDigits);
+      const candDivisor = roundTo(divisorInt / scale, dp);
+
+      // Alternate between clean decimal quotients and integer quotients
+      const useDecimalQuotient = attempt % 2 === 0;
+      const candQuotient = useDecimalQuotient
+        ? roundTo(getRandomNonZeroEndingInt(Math.max(quotientDigits + dp, dp + 1)) / scale, dp)
+        : getRandomIntWithDigits(quotientDigits);
+
+      const candDividend = roundTo(candDivisor * candQuotient, dp * 2);
+
+      if (!Number.isInteger(candDivisor) && !Number.isInteger(candDividend)) {
+        divisor = candDivisor;
+        quotient = candQuotient;
+        dividend = candDividend;
+        break;
+      }
+    }
+
+    // Final safety guarantee so both numbers always have a decimal point
+    if (Number.isInteger(dividend) || Number.isInteger(divisor)) {
+      const fallbackDivisor = roundTo((Math.pow(10, dp) + 3) / scale, dp); // e.g. 1.3 or 1.03
+      const fallbackQuotient = roundTo((Math.pow(10, dp) * 2 + 7) / scale, dp); // e.g. 2.7 or 2.07
+      divisor = fallbackDivisor;
+      quotient = fallbackQuotient;
+      dividend = roundTo(divisor * quotient, dp * 2);
+    }
+
+    return {
+      id: `div-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 7)}`,
+      type: 'division',
+      numA: dividend,
+      numB: divisor,
+      symbol: '÷',
+      correctAnswer: quotient,
+      hasDecimals: true,
+      decimalPlaces: dp,
+      dividendDigits,
+      divisorDigits
+    };
+  }
 
   // Clean exact integer division: dividend = divisor * quotient
   const divisor = getRandomIntWithDigits(divisorDigits);
@@ -237,7 +338,10 @@ export function generateDivisionProblem(settings: DivisionSettings, index: numbe
     numB: divisor,
     symbol: '÷',
     correctAnswer: quotient,
-    hasDecimals: false
+    hasDecimals: false,
+    decimalPlaces: 0,
+    dividendDigits,
+    divisorDigits
   };
 }
 
@@ -276,6 +380,8 @@ export function generateQuizProblems(
               numbersCount: s.addSubNumbers,
               digitsCount: s.addSubDigits,
               formulaMode: s.addSubFormulaMode || 'simple',
+              hasDecimals: s.addSubHasDecimals,
+              decimalPlaces: s.addSubDecimalPlaces,
               questionCount: s.addSubCount,
               timeLimitSeconds: s.timeLimitSeconds
             },
@@ -292,6 +398,8 @@ export function generateQuizProblems(
             {
               digits1: s.multDigits1,
               digits2: s.multDigits2,
+              hasDecimals: s.multHasDecimals,
+              decimalPlaces: s.multDecimalPlaces,
               questionCount: s.multCount,
               timeLimitSeconds: s.timeLimitSeconds
             },
@@ -308,6 +416,8 @@ export function generateQuizProblems(
             {
               dividendDigits: s.divDividendDigits,
               divisorDigits: s.divDivisorDigits,
+              hasDecimals: s.divHasDecimals,
+              decimalPlaces: s.divDecimalPlaces,
               questionCount: s.divCount,
               timeLimitSeconds: s.timeLimitSeconds
             },
@@ -327,12 +437,31 @@ export function generateQuizProblems(
   return problems;
 }
 
+export function isZeroCoinPracticeProblem(problem: Pick<MathProblem, 'type' | 'hasDecimals' | 'formulaMode' | 'digitsCount' | 'digits1' | 'digits2' | 'terms' | 'numA' | 'numB'>): boolean {
+  if (problem.hasDecimals) return false;
+
+  if (problem.type === 'add-sub') {
+    const maxVal = Math.max(1, ...(problem.terms?.map((t) => Math.abs(t)) || [1]));
+    const inferredDigits = Math.max(1, Math.floor(Math.log10(Math.max(1, maxVal))) + 1);
+    const digits = problem.digitsCount ?? inferredDigits;
+    const mode = problem.formulaMode || 'simple';
+    return digits === 1 && (mode === 'simple' || mode === 'friends-5');
+  }
+
+  if (problem.type === 'multiplication') {
+    const d1 = problem.digits1 ?? (problem.numA ? Math.floor(Math.log10(Math.max(1, Math.abs(problem.numA)))) + 1 : 2);
+    const d2 = problem.digits2 ?? (problem.numB ? Math.floor(Math.log10(Math.max(1, Math.abs(problem.numB)))) + 1 : 1);
+    return d1 === 1 && d2 === 1;
+  }
+
+  return false;
+}
+
 /**
  * Calibrated coin rewards:
- * Increased difficulty to earn coins so players practice longer!
- * Base: 2 to 5 coins
- * Speed: +1 or +2 coins
- * Streak: +1 to +3 coins
+ * - Add/Sub 1-digit Simple & Friends-5 (no decimals) -> 0 coins (Practice Mode)
+ * - Multiplication 1x1 (no decimals) -> 0 coins (Practice Mode)
+ * - All other modes -> Base (2-3) + Difficulty + Speed (+1/+2) + Streak (+1..+3)
  */
 export function calculateProblemReward(
   problem: MathProblem,
@@ -343,33 +472,44 @@ export function calculateProblemReward(
     return { coins: 0, bonus: 0 };
   }
 
+  if (isZeroCoinPracticeProblem(problem)) {
+    return {
+      coins: 0,
+      bonus: 0,
+      breakdown: { base: 0, difficulty: 0, speed: 0, streak: 0 }
+    };
+  }
+
   let baseCoins = 2;
   let difficultyCoins = 0;
 
   if (problem.type === 'add-sub') {
     const termsCount = problem.terms?.length || 2;
-    const maxVal = Math.max(...(problem.terms?.map((t) => Math.abs(t)) || [10]));
-    const digits = Math.max(1, Math.floor(Math.log10(maxVal || 1)) + 1);
+    const maxVal = Math.max(1, ...(problem.terms?.map((t) => Math.abs(t)) || [10]));
+    const digits = problem.digitsCount ?? Math.max(1, Math.floor(Math.log10(Math.max(1, maxVal))) + 1);
 
-    // 1-digit: 0, 2-digit: +1, 3-digit: +2, 4+ digit: +3
     difficultyCoins += Math.min(3, Math.max(0, digits - 1));
+    if (problem.formulaMode === 'friends-10') difficultyCoins += 1;
     if (termsCount >= 5) difficultyCoins += 1;
     if (termsCount >= 8) difficultyCoins += 1;
   } else if (problem.type === 'multiplication') {
-    const digits1 = problem.numA ? Math.floor(Math.log10(Math.abs(problem.numA) || 1)) + 1 : 2;
-    const digits2 = problem.numB ? Math.floor(Math.log10(Math.abs(problem.numB) || 1)) + 1 : 1;
+    const digits1 = problem.digits1 ?? (problem.numA ? Math.floor(Math.log10(Math.max(1, Math.abs(problem.numA)))) + 1 : 2);
+    const digits2 = problem.digits2 ?? (problem.numB ? Math.floor(Math.log10(Math.max(1, Math.abs(problem.numB)))) + 1 : 1);
     baseCoins = 3;
     if (digits1 >= 2 && digits2 >= 2) difficultyCoins += 2;
     else if (digits1 >= 2 || digits2 >= 2) difficultyCoins += 1;
     if (digits1 + digits2 >= 5) difficultyCoins += 1;
   } else if (problem.type === 'division') {
-    const divDigits = problem.numA ? Math.floor(Math.log10(Math.abs(problem.numA) || 1)) + 1 : 3;
+    const divDigits = problem.dividendDigits ?? (problem.numA ? Math.floor(Math.log10(Math.max(1, Math.abs(problem.numA)))) + 1 : 3);
     baseCoins = 3;
     if (divDigits >= 3) difficultyCoins += 1;
     if (divDigits >= 4) difficultyCoins += 1;
   }
 
-  // Speed Bonus (earned through fast reflexes)
+  if (problem.hasDecimals) {
+    difficultyCoins += 1;
+  }
+
   let speedBonus = 0;
   if (timeTakenSeconds <= 2) {
     speedBonus = 2;
@@ -377,8 +517,7 @@ export function calculateProblemReward(
     speedBonus = 1;
   }
 
-  // Streak Bonus (1 coin every 4 correct streak, max 3)
-  const streakBonus = Math.min(3, Math.floor(streak / 4));
+  const streakBonus = Math.min(3, Math.floor(streak / 3));
   const total = baseCoins + difficultyCoins + speedBonus + streakBonus;
 
   return {

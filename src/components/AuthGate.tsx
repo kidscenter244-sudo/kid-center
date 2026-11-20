@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { sounds } from '../utils/audio';
 import { MathRobloxLogo } from './MathRobloxLogo';
-import { Lock, Mail, User, ArrowRight, GraduationCap, Eye, EyeOff, Sparkles, KeyRound } from 'lucide-react';
+import { Lock, Mail, User, ArrowRight, GraduationCap, Eye, EyeOff, Sparkles, KeyRound, Languages } from 'lucide-react';
 
 interface AuthGateProps {
   onSuccess: () => void;
@@ -10,6 +11,7 @@ interface AuthGateProps {
 
 export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
   const { login, register, teacherLogin, loginGuest } = useAuth();
+  const { lang, toggleLang, t } = useLanguage();
 
   const [authMode, setAuthMode] = useState<'login' | 'register' | 'teacher'>('login');
   const [email, setEmail] = useState('');
@@ -59,7 +61,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
       setErrorMsg(res.message);
       sounds.playWrong();
     } else {
-      setSuccessMsg('Teacher Portal Access Granted!');
+      setSuccessMsg(t('Teacher Portal Access Granted!', 'تم الدخول إلى بوابة المعلم بنجاح!'));
       sounds.playUnlock();
       setTimeout(onSuccess, 500);
     }
@@ -91,20 +93,36 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
         {/* Animated Top Gradient Accent */}
         <div className="h-2 w-full bg-gradient-to-r from-amber-400 via-rose-500 to-yellow-400" />
 
+        {/* Language Toggle Button */}
+        <button
+          type="button"
+          onClick={() => {
+            sounds.playKeyClick();
+            toggleLang();
+          }}
+          className="absolute top-4 right-4 z-20 px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-amber-300 border-2 border-neutral-900 rounded-xl text-xs font-black cursor-pointer shadow-[0_2px_0_0_#171717] flex items-center gap-1.5"
+        >
+          <Languages className="w-3.5 h-3.5" />
+          <span>{lang === 'en' ? 'عربي' : 'EN'}</span>
+        </button>
+
         {/* Card Header with MathRobloxLogo */}
         <div className="px-6 pt-6 pb-4 bg-gradient-to-b from-amber-50 to-white text-center border-b-2 border-neutral-200">
           <div className="flex justify-center mb-2">
             <MathRobloxLogo size="xl" />
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-neutral-900 tracking-tight leading-tight">
-            Kids Center <span className="text-amber-600">Pro Games</span>
+            {t('Kids Center', 'كيدز سنتر')} <span className="text-amber-600">{t('Pro Games', 'برو جيمز')}</span>
           </h1>
           <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider mt-0.5">
-            50 Football Stars • 15 Ballon d'Or Legends • Mental Math
+            {t(
+              "50 Football Stars • 15 Ballon d'Or Legends • Mental Math",
+              '50 نجم كرة قدم • 15 أسطورة بالون دور • حساب ذهني'
+            )}
           </p>
         </div>
 
-        {/* Mode Switcher Tabs (All in English) */}
+        {/* Mode Switcher Tabs */}
         <div className="grid grid-cols-3 border-b-2 border-neutral-900 bg-neutral-100 text-xs font-black">
           <button
             type="button"
@@ -120,7 +138,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
                 : 'text-neutral-500 hover:text-neutral-900'
             }`}
           >
-            Sign In
+            {t('Sign In', 'تسجيل الدخول')}
           </button>
           <button
             type="button"
@@ -136,7 +154,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
                 : 'text-neutral-500 hover:text-neutral-900'
             }`}
           >
-            Create Account
+            {t('Create Account', 'إنشاء حساب')}
           </button>
           <button
             type="button"
@@ -153,7 +171,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
             }`}
           >
             <GraduationCap className="w-3.5 h-3.5" />
-            <span>Teacher</span>
+            <span>{t('Teacher', 'المعلم')}</span>
           </button>
         </div>
 
@@ -178,7 +196,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
             <form onSubmit={handleStudentLogin} className="space-y-4">
               <div>
                 <label className="block text-xs font-black uppercase text-neutral-700 mb-1">
-                  Student Email:
+                  {t('Student Email:', 'البريد الإلكتروني للطالب:')}
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-neutral-400 absolute left-3.5 top-3.5" />
@@ -188,6 +206,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="student@kidscenter.com"
+                    dir="ltr"
                     className="w-full pl-10 pr-4 py-3 bg-neutral-50 focus:bg-white border-2 border-neutral-900 rounded-2xl font-bold text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-amber-400 shadow-xs transition-all"
                   />
                 </div>
@@ -195,7 +214,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
 
               <div>
                 <label className="block text-xs font-black uppercase text-neutral-700 mb-1">
-                  Password:
+                  {t('Password:', 'كلمة المرور:')}
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-neutral-400 absolute left-3.5 top-3.5" />
@@ -205,6 +224,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
+                    dir="ltr"
                     className="w-full pl-10 pr-11 py-3 bg-neutral-50 focus:bg-white border-2 border-neutral-900 rounded-2xl font-bold text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-amber-400 shadow-xs transition-all"
                   />
                   <button
@@ -221,7 +241,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
                 type="submit"
                 className="w-full py-3.5 bg-amber-400 hover:bg-amber-500 border-2 border-neutral-900 rounded-2xl font-black text-sm uppercase tracking-wider text-neutral-900 cursor-pointer shadow-[0_4px_0_0_#171717] active:translate-y-0.5 transition-all flex items-center justify-center gap-2 mt-2"
               >
-                <span>Enter Math Arena</span>
+                <span>{t('Enter Math Arena', 'دخول ساحة الحساب الذهني')}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </form>
@@ -232,7 +252,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
             <form onSubmit={handleStudentRegister} className="space-y-4">
               <div>
                 <label className="block text-xs font-black uppercase text-neutral-700 mb-1">
-                  Player Nickname:
+                  {t('Player Nickname:', 'اسم اللاعب:')}
                 </label>
                 <div className="relative">
                   <User className="w-4 h-4 text-neutral-400 absolute left-3.5 top-3.5" />
@@ -241,7 +261,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
                     required
                     value={nickname}
                     onChange={(e) => setNickname(e.target.value)}
-                    placeholder="e.g. Math Ace Omar or Lightning Sarah"
+                    placeholder={t('e.g. Math Ace Omar', 'مثال: عمر بطل الحساب')}
                     className="w-full pl-10 pr-4 py-3 bg-neutral-50 focus:bg-white border-2 border-neutral-900 rounded-2xl font-bold text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-amber-400 shadow-xs transition-all"
                   />
                 </div>
@@ -249,7 +269,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
 
               <div>
                 <label className="block text-xs font-black uppercase text-neutral-700 mb-1">
-                  Email Address:
+                  {t('Email Address:', 'البريد الإلكتروني:')}
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-neutral-400 absolute left-3.5 top-3.5" />
@@ -259,6 +279,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="student@kidscenter.com"
+                    dir="ltr"
                     className="w-full pl-10 pr-4 py-3 bg-neutral-50 focus:bg-white border-2 border-neutral-900 rounded-2xl font-bold text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-amber-400 shadow-xs transition-all"
                   />
                 </div>
@@ -266,7 +287,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
 
               <div>
                 <label className="block text-xs font-black uppercase text-neutral-700 mb-1">
-                  Password:
+                  {t('Password:', 'كلمة المرور:')}
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-neutral-400 absolute left-3.5 top-3.5" />
@@ -276,6 +297,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
+                    dir="ltr"
                     className="w-full pl-10 pr-11 py-3 bg-neutral-50 focus:bg-white border-2 border-neutral-900 rounded-2xl font-bold text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-amber-400 shadow-xs transition-all"
                   />
                   <button
@@ -290,14 +312,19 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
 
               <div className="p-2.5 bg-amber-50 border border-amber-300 rounded-2xl text-[11px] font-bold text-amber-900 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
-                <span>Instantly receive 450 Bonus Coins + Free Bloxy Prodigy Hero!</span>
+                <span>
+                  {t(
+                    'Start with 450 Bonus Coins! Solve math challenges to unlock your first star player.',
+                    'ابدأ برصيد 450 عملة مجانية! حل مسائل الحساب الذهني لفتح أول لاعب لك.'
+                  )}
+                </span>
               </div>
 
               <button
                 type="submit"
                 className="w-full py-3.5 bg-emerald-400 hover:bg-emerald-500 border-2 border-neutral-900 rounded-2xl font-black text-sm uppercase tracking-wider text-neutral-900 cursor-pointer shadow-[0_4px_0_0_#171717] active:translate-y-0.5 transition-all flex items-center justify-center gap-2 mt-2"
               >
-                <span>Create Account & Start Playing 🚀</span>
+                <span>{t('Create Account & Start Playing 🚀', 'إنشاء الحساب والبدء باللعب 🚀')}</span>
               </button>
             </form>
           )}
@@ -306,12 +333,19 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
           {authMode === 'teacher' && (
             <form onSubmit={handleTeacherSubmit} className="space-y-4">
               <div className="p-3 bg-neutral-900 text-amber-300 border-2 border-neutral-900 rounded-2xl text-xs font-bold leading-relaxed">
-                👨‍🏫 <span className="font-black text-white">Private Teacher Portal:</span> Monitor live student performance, question accuracy, streaks, and award bonus homework tokens.
+                👨‍🏫{' '}
+                <span className="font-black text-white">
+                  {t('Private Teacher Portal:', 'بوابة المعلم الخاصة:')}
+                </span>{' '}
+                {t(
+                  'Monitor live student performance, question accuracy, streaks, and award bonus homework tokens.',
+                  'تابع أداء الطلاب، الدقة، سلاسل النجاح، وامنحهم عملات مكافأة إضافية.'
+                )}
               </div>
 
               <div>
                 <label className="block text-xs font-black uppercase text-neutral-700 mb-1">
-                  Secret Teacher Passcode:
+                  {t('Secret Teacher Passcode:', 'رمز دخول المعلم السري:')}
                 </label>
                 <div className="relative">
                   <KeyRound className="w-4 h-4 text-neutral-400 absolute left-3.5 top-3.5" />
@@ -321,6 +355,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
                     value={teacherPasscode}
                     onChange={(e) => setTeacherPasscode(e.target.value)}
                     placeholder="••••••••••••"
+                    dir="ltr"
                     className="w-full pl-10 pr-4 py-3 bg-neutral-50 focus:bg-white border-2 border-neutral-900 rounded-2xl font-mono font-bold text-base text-neutral-900 focus:outline-none focus:ring-2 focus:ring-amber-400 shadow-xs"
                   />
                 </div>
@@ -330,7 +365,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
                 type="submit"
                 className="w-full py-3.5 bg-neutral-900 hover:bg-neutral-800 text-amber-400 border-2 border-neutral-900 rounded-2xl font-black text-sm uppercase tracking-wider cursor-pointer shadow-[0_4px_0_0_#171717] active:translate-y-0.5 transition-all flex items-center justify-center gap-2 mt-2"
               >
-                <span>Access Teacher Dashboard</span>
+                <span>{t('Access Teacher Dashboard', 'دخول لوحة المعلم')}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </form>
@@ -343,7 +378,7 @@ export const AuthGate: React.FC<AuthGateProps> = ({ onSuccess }) => {
               onClick={handleGuestQuickStart}
               className="w-full py-2.5 bg-neutral-100 hover:bg-neutral-200 border-2 border-neutral-900 rounded-2xl text-xs font-black text-neutral-800 cursor-pointer transition-all flex items-center justify-center gap-1.5"
             >
-              <span>🎮 Quick Demo Access (Guest Mode)</span>
+              <span>🎮 {t('Quick Demo Access (Guest Mode)', 'دخول تجريبي سريع (ضيف)')}</span>
             </button>
           </div>
         </div>

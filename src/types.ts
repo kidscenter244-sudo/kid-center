@@ -74,6 +74,12 @@ export interface MathProblem {
   timeTakenSeconds?: number;
   hasDecimals?: boolean;
   decimalPlaces?: number;
+  formulaMode?: 'simple' | 'friends-5' | 'friends-10';
+  digitsCount?: number;
+  digits1?: number;
+  digits2?: number;
+  dividendDigits?: number;
+  divisorDigits?: number;
 }
 
 export interface QuizSessionSummary {
@@ -94,6 +100,8 @@ export interface UserStats {
   totalCorrect: number;
   totalCoinsEarned: number;
   bestStreak: number;
+  dailyStreak?: number;
+  lastActiveDate?: string;
 }
 
 export interface UserAccount {
@@ -117,6 +125,8 @@ export interface StudentRosterRecord {
   totalCorrect: number;
   accuracy: number;
   bestStreak: number;
+  dailyStreak: number;
+  lastActiveDate?: string;
   equippedCharacterId: string;
   unlockedCount?: number;
   lastActive: string;

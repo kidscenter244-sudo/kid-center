@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import { sounds } from '../utils/audio';
-import { X, Lock, Mail, Smartphone, Copy, Check, ArrowRight, ShieldCheck } from 'lucide-react';
+import { X, Lock, Mail, Copy, Check, ShieldCheck } from 'lucide-react';
 
 export const AuthModal: React.FC = () => {
   const {
@@ -14,6 +15,7 @@ export const AuthModal: React.FC = () => {
     exportSyncCode,
     importSyncCode
   } = useAuth();
+  const { t } = useLanguage();
 
   const [mode, setMode] = useState<'login' | 'register' | 'sync'>('login');
   const [email, setEmail] = useState('');
@@ -81,7 +83,7 @@ export const AuthModal: React.FC = () => {
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-6 h-6 text-neutral-900" />
             <h3 className="font-black text-lg text-neutral-900">
-              Account & Phone Sync
+              {t('Account & Phone Sync', 'الحساب ومزامنة الهاتف')}
             </h3>
           </div>
           <button
@@ -107,7 +109,7 @@ export const AuthModal: React.FC = () => {
               mode === 'login' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-900'
             }`}
           >
-            Sign In
+            {t('Sign In', 'تسجيل الدخول')}
           </button>
           <button
             onClick={() => {
@@ -119,7 +121,7 @@ export const AuthModal: React.FC = () => {
               mode === 'register' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-900'
             }`}
           >
-            Create Account
+            {t('Create Account', 'حساب جديد')}
           </button>
           <button
             onClick={() => {
@@ -131,7 +133,7 @@ export const AuthModal: React.FC = () => {
               mode === 'sync' ? 'bg-white text-neutral-900 shadow-sm' : 'text-neutral-500 hover:text-neutral-900'
             }`}
           >
-            📱 Phone Sync
+            📱 {t('Phone Sync', 'مزامنة')}
           </button>
         </div>
 
@@ -151,7 +153,9 @@ export const AuthModal: React.FC = () => {
           {user && (
             <div className="mb-4 p-3 bg-neutral-50 border border-neutral-300 rounded-xl flex items-center justify-between text-xs font-semibold">
               <div>
-                <span className="text-neutral-500 block text-[10px] uppercase font-bold">Current Player</span>
+                <span className="text-neutral-500 block text-[10px] uppercase font-bold">
+                  {t('Current Player', 'اللاعب الحالي')}
+                </span>
                 <span className="font-black text-neutral-900">{user.nickname}</span> ({user.email})
               </div>
               <div className="font-mono font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded-md border border-neutral-900">
@@ -164,13 +168,14 @@ export const AuthModal: React.FC = () => {
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="block text-xs font-black uppercase text-neutral-700 mb-1">
-                  Email Address
+                  {t('Email Address', 'البريد الإلكتروني')}
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-neutral-400 absolute left-3 top-3" />
                   <input
                     type="email"
                     required
+                    dir="ltr"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="student@example.com"
@@ -181,13 +186,14 @@ export const AuthModal: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-black uppercase text-neutral-700 mb-1">
-                  Password
+                  {t('Password', 'كلمة المرور')}
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-neutral-400 absolute left-3 top-3" />
                   <input
                     type="password"
                     required
+                    dir="ltr"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
@@ -200,7 +206,7 @@ export const AuthModal: React.FC = () => {
                 type="submit"
                 className="w-full py-3 bg-amber-400 hover:bg-amber-500 border-2 border-neutral-900 rounded-xl font-black text-neutral-900 shadow-[0_4px_0_0_#171717] active:translate-y-0.5 cursor-pointer text-sm uppercase tracking-wider transition-all"
               >
-                Sign In to My Account
+                {t('Sign In to My Account', 'تسجيل الدخول إلى حسابي')}
               </button>
             </form>
           )}
@@ -209,25 +215,26 @@ export const AuthModal: React.FC = () => {
             <form onSubmit={handleRegister} className="space-y-3.5">
               <div>
                 <label className="block text-xs font-black uppercase text-neutral-700 mb-1">
-                  Hero Nickname
+                  {t('Hero Nickname', 'اسم البطل')}
                 </label>
                 <input
                   type="text"
                   required
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
-                  placeholder="e.g. Leo The Prodigy"
+                  placeholder={t('e.g. Leo The Prodigy', 'مثال: أحمد البطل')}
                   className="w-full px-3 py-2 bg-white border-2 border-neutral-900 rounded-xl font-bold text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-amber-400"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-black uppercase text-neutral-700 mb-1">
-                  Email Address
+                  {t('Email Address', 'البريد الإلكتروني')}
                 </label>
                 <input
                   type="email"
                   required
+                  dir="ltr"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="student@example.com"
@@ -237,11 +244,12 @@ export const AuthModal: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-black uppercase text-neutral-700 mb-1">
-                  Create Password (min 4 chars)
+                  {t('Create Password (min 4 chars)', 'إنشاء كلمة مرور (4 أحرف على الأقل)')}
                 </label>
                 <input
                   type="password"
                   required
+                  dir="ltr"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
@@ -250,14 +258,17 @@ export const AuthModal: React.FC = () => {
               </div>
 
               <p className="text-[11px] text-neutral-600 font-medium">
-                Your coins, character purchases, and customized 3D items will be linked directly to your account.
+                {t(
+                  'Your coins, character purchases, and progress will be linked directly to your account.',
+                  'سيتم ربط عملاتك ومشترياتك من اللاعبين وتقدمك مباشرة بحسابك.'
+                )}
               </p>
 
               <button
                 type="submit"
                 className="w-full py-3 bg-emerald-400 hover:bg-emerald-500 border-2 border-neutral-900 rounded-xl font-black text-neutral-900 shadow-[0_4px_0_0_#171717] active:translate-y-0.5 cursor-pointer text-sm uppercase tracking-wider transition-all"
               >
-                Register & Save Progress
+                {t('Register & Save Progress', 'إنشاء الحساب وحفظ التقدم')}
               </button>
             </form>
           )}
@@ -265,25 +276,28 @@ export const AuthModal: React.FC = () => {
           {mode === 'sync' && (
             <div className="space-y-4">
               <div className="p-3 bg-sky-50 border-2 border-sky-300 rounded-xl text-xs font-semibold text-neutral-700">
-                Open this app on your phone, tablet, or another browser and enter your sync code below to carry over all your coins & 3D unlocked heroes!
+                {t(
+                  'Open this app on your phone, tablet, or another browser and enter your sync code below to carry over all your coins & unlocked heroes!',
+                  'افتح هذا الموقع على هاتفك أو جهاز آخر وأدخل كود المزامنة لنقل عملاتك واللاعبين الذين اشتريتهم!'
+                )}
               </div>
 
               {/* Export passkey */}
               <div>
                 <label className="block text-xs font-black uppercase text-neutral-800 mb-1">
-                  Your Account Sync Passkey:
+                  {t('Your Account Sync Passkey:', 'كود مزامنة حسابك:')}
                 </label>
                 <button
                   type="button"
                   onClick={handleCopySyncCode}
                   className="w-full py-2.5 px-3 bg-white border-2 border-neutral-900 rounded-xl font-bold text-xs flex items-center justify-between hover:bg-neutral-100 shadow-[0_2px_0_0_#171717] cursor-pointer"
                 >
-                  <span className="truncate max-w-[240px] font-mono text-neutral-600">
+                  <span className="truncate max-w-[240px] font-mono text-neutral-600" dir="ltr">
                     {exportSyncCode().slice(0, 32)}...
                   </span>
                   <span className="flex items-center gap-1 text-amber-700 font-black">
                     {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                    {copied ? 'Copied!' : 'Copy Code'}
+                    {copied ? t('Copied!', 'تم النسخ!') : t('Copy Code', 'نسخ الكود')}
                   </span>
                 </button>
               </div>
@@ -291,14 +305,15 @@ export const AuthModal: React.FC = () => {
               {/* Import passkey */}
               <div className="pt-2 border-t border-neutral-200">
                 <label className="block text-xs font-black uppercase text-neutral-800 mb-1">
-                  Restore from Phone / Another Device:
+                  {t('Restore from Phone / Another Device:', 'استعادة من هاتف أو جهاز آخر:')}
                 </label>
                 <div className="flex gap-2">
                   <input
                     type="text"
+                    dir="ltr"
                     value={syncInput}
                     onChange={(e) => setSyncInput(e.target.value)}
-                    placeholder="Paste sync code here..."
+                    placeholder={t('Paste sync code here...', 'الصق كود المزامنة هنا...')}
                     className="flex-1 px-3 py-2 bg-white border-2 border-neutral-900 rounded-xl font-mono text-xs text-neutral-900 focus:outline-none focus:ring-2 focus:ring-amber-400"
                   />
                   <button
@@ -306,7 +321,7 @@ export const AuthModal: React.FC = () => {
                     onClick={handleImportSyncCode}
                     className="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 text-white font-black text-xs rounded-xl border-2 border-neutral-900 cursor-pointer shadow-sm active:translate-y-0.5"
                   >
-                    Load
+                    {t('Load', 'استيراد')}
                   </button>
                 </div>
               </div>
@@ -315,17 +330,19 @@ export const AuthModal: React.FC = () => {
 
           {user && (
             <div className="mt-5 pt-4 border-t border-neutral-200 flex justify-between items-center">
-              <span className="text-xs text-neutral-500 font-semibold">Active Session</span>
+              <span className="text-xs text-neutral-500 font-semibold">
+                {t('Active Session', 'جلسة نشطة')}
+              </span>
               <button
                 type="button"
                 onClick={() => {
                   sounds.playKeyClick();
                   logout();
-                  setMsg({ text: 'Logged out successfully.', error: false });
+                  setMsg({ text: t('Logged out successfully.', 'تم تسجيل الخروج بنجاح.'), error: false });
                 }}
                 className="text-xs font-bold text-rose-600 hover:underline cursor-pointer"
               >
-                Log Out
+                {t('Log Out', 'تسجيل الخروج')}
               </button>
             </div>
           )}

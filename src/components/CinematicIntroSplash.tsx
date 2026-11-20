@@ -5,6 +5,7 @@ import { sounds } from '../utils/audio';
 import { MathRobloxLogo } from './MathRobloxLogo';
 import { ArrowRight, Trophy } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 interface CinematicIntroSplashProps {
   onComplete: () => void;
@@ -13,6 +14,7 @@ interface CinematicIntroSplashProps {
 export const CinematicIntroSplash: React.FC<CinematicIntroSplashProps> = ({ onComplete }) => {
   const [secondsLeft, setSecondsLeft] = useState(5);
   const { user } = useAuth();
+  const { t } = useLanguage();
   // Display the student's own equipped player!
   const equippedId = user?.equippedCharacterId || user?.unlockedCharacters?.[0] || '';
   const equippedHero = CHARACTERS.find((c) => c.id === equippedId);
@@ -62,7 +64,7 @@ export const CinematicIntroSplash: React.FC<CinematicIntroSplashProps> = ({ onCo
             <div className="flex items-center gap-3">
               <MathRobloxLogo size="lg" />
               <div className="px-3 py-1 bg-neutral-800 border border-neutral-700 rounded-xl text-xs font-black uppercase text-amber-400 tracking-wider">
-                Math Champions Arena
+                {t('Math Champions Arena', 'ساحة أبطال الحساب الذهني')}
               </div>
             </div>
 
@@ -72,7 +74,10 @@ export const CinematicIntroSplash: React.FC<CinematicIntroSplashProps> = ({ onCo
                 <span className="text-amber-400">Pro Games</span>
               </h1>
               <p className="text-sm font-semibold text-neutral-400 max-w-md leading-relaxed">
-                Speed mental arithmetic training, real-time student leaderboards, and 50 official football stars with authentic Ballon d'Or powers.
+                {t(
+                  "Speed mental arithmetic training, real-time student leaderboards, and 50 official football stars with authentic Ballon d'Or powers.",
+                  'تدريب سرعة الحساب الذهني، لوحة شرف الطلاب المباشرة، وأكثر من 50 نجم كرة قدم بقدرات الكرة الذهبية.'
+                )}
               </p>
             </div>
 
@@ -82,13 +87,13 @@ export const CinematicIntroSplash: React.FC<CinematicIntroSplashProps> = ({ onCo
                 onClick={handleSkip}
                 className="px-6 py-3 bg-amber-400 hover:bg-amber-300 text-neutral-950 font-black text-sm uppercase tracking-wider rounded-2xl border-2 border-neutral-900 shadow-[0_4px_0_0_#171717] active:translate-y-0.5 cursor-pointer flex items-center gap-2 transition-all"
               >
-                <span>Enter Arena</span>
+                <span>{t('Enter Arena', 'دخول الساحة')}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 
               <div className="flex items-center gap-2 text-xs font-bold text-neutral-400">
                 <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-                <span>Auto-starting in {secondsLeft}s...</span>
+                <span>{t(`Auto-starting in ${secondsLeft}s...`, `الدخول التلقائي خلال ${secondsLeft}ث...`)}</span>
               </div>
             </div>
           </div>
@@ -99,15 +104,19 @@ export const CinematicIntroSplash: React.FC<CinematicIntroSplashProps> = ({ onCo
               {equippedHero ? (
                 <>
                   <div className="mb-2 text-center">
-                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 bg-amber-950/80 px-2.5 py-0.5 rounded-full border border-amber-800">Your Equipped Champion</span>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-400 bg-amber-950/80 px-2.5 py-0.5 rounded-full border border-amber-800">
+                      {t('Your Equipped Champion', 'لاعبك المُجهز')}
+                    </span>
                   </div>
                   <PlayerPhotoShowcase character={equippedHero} isCompact={true} showDetailsOverlay={true} />
                 </>
               ) : (
                 <div className="aspect-[3/4] min-h-[300px] rounded-3xl border-2 border-dashed border-neutral-700 bg-neutral-900/80 flex flex-col items-center justify-center text-center p-6 text-white">
                   <span className="text-6xl mb-4">⚽</span>
-                  <h2 className="text-xl font-black">No Player Yet</h2>
-                  <p className="text-sm text-neutral-400 mt-2">Visit the Players Locker and buy your first football star.</p>
+                  <h2 className="text-xl font-black">{t('No Player Yet', 'لا يوجد لاعب بعد')}</h2>
+                  <p className="text-sm text-neutral-400 mt-2">
+                    {t('Visit the Players Locker and buy your first football star.', 'قم بزيارة متجر اللاعبين واجمع العملات لشراء أول نجم لك.')}
+                  </p>
                 </div>
               )}
             </div>

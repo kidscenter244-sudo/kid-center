@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { QuizSessionSummary } from '../types';
 import { sounds } from '../utils/audio';
+import { useLanguage } from '../context/LanguageContext';
 import { Trophy, CheckCircle2, XCircle, Sparkles, ArrowRight, ArrowLeft } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -15,10 +16,11 @@ export const QuizSummaryModal: React.FC<QuizSummaryModalProps> = ({
   onBackToArena,
   onGoToLocker
 }) => {
+  const { t } = useLanguage();
+
   useEffect(() => {
     sounds.playVictoryFanfare();
 
-    // Burst confetti
     try {
       confetti({
         particleCount: 80,
@@ -51,7 +53,7 @@ export const QuizSummaryModal: React.FC<QuizSummaryModalProps> = ({
             <Trophy className="w-8 h-8 text-amber-500 fill-amber-400" />
           </div>
           <h2 className="text-2xl sm:text-3xl font-black text-neutral-900 tracking-tight">
-            Challenge Completed!
+            {t('Challenge Completed!', 'اكتمل التحدي!')}
           </h2>
           <p className="text-xs font-bold text-neutral-800 uppercase tracking-widest mt-1">
             {summary.categoryTitle}
@@ -63,9 +65,9 @@ export const QuizSummaryModal: React.FC<QuizSummaryModalProps> = ({
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="p-3 bg-amber-50 border-2 border-neutral-900 rounded-2xl shadow-[0_3px_0_0_#171717]">
               <span className="text-[10px] font-black uppercase text-neutral-500 block">
-                Coins Won
+                {t('Coins Won', 'العملات المكتسبة')}
               </span>
-              <span className="font-mono text-xl sm:text-2xl font-black text-amber-700 flex items-center justify-center gap-1">
+              <span className="font-mono text-xl sm:text-2xl font-black text-amber-700 flex items-center justify-center gap-1" dir="ltr">
                 <span>🪙</span>
                 <span>+{summary.coinsEarned}</span>
               </span>
@@ -73,16 +75,16 @@ export const QuizSummaryModal: React.FC<QuizSummaryModalProps> = ({
 
             <div className="p-3 bg-emerald-50 border-2 border-neutral-900 rounded-2xl shadow-[0_3px_0_0_#171717]">
               <span className="text-[10px] font-black uppercase text-neutral-500 block">
-                Score
+                {t('Score', 'النتيجة')}
               </span>
-              <span className="font-mono text-xl sm:text-2xl font-black text-emerald-700">
+              <span className="font-mono text-xl sm:text-2xl font-black text-emerald-700" dir="ltr">
                 {summary.correctAnswers} / {summary.totalQuestions}
               </span>
             </div>
 
             <div className="p-3 bg-sky-50 border-2 border-neutral-900 rounded-2xl shadow-[0_3px_0_0_#171717]">
               <span className="text-[10px] font-black uppercase text-neutral-500 block">
-                Accuracy
+                {t('Accuracy', 'الدقة')}
               </span>
               <span className="font-mono text-xl sm:text-2xl font-black text-sky-700">
                 {summary.accuracy}%
@@ -93,7 +95,7 @@ export const QuizSummaryModal: React.FC<QuizSummaryModalProps> = ({
           {/* Problem-by-problem review */}
           <div>
             <h4 className="text-xs font-black uppercase tracking-wider text-neutral-500 mb-2">
-              Question Review:
+              {t('Question Review:', 'مراجعة الأسئلة:')}
             </h4>
             <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
               {summary.problems.map((p, idx) => (
@@ -103,7 +105,7 @@ export const QuizSummaryModal: React.FC<QuizSummaryModalProps> = ({
                     p.isCorrect ? 'bg-emerald-50 text-emerald-950' : 'bg-rose-50 text-rose-950'
                   }`}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2" dir="ltr">
                     {p.isCorrect ? (
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 stroke-[2.5]" />
                     ) : (
@@ -111,18 +113,18 @@ export const QuizSummaryModal: React.FC<QuizSummaryModalProps> = ({
                     )}
                     <span>
                       {p.type === 'add-sub' && p.terms
-                        ? `[ ${p.terms.map(t => (t < 0 ? `−${Math.abs(t)}` : `${t}`)).join(', ')} ]`
+                        ? `[ ${p.terms.map((tItem) => (tItem < 0 ? `−${Math.abs(tItem)}` : `${tItem}`)).join(', ')} ]`
                         : `${p.numA} ${p.symbol} ${p.numB}`}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-3 font-mono">
                     <span>
-                      Your: <span className="font-black">{p.userAnswer ?? '–'}</span>
+                      {t('Your:', 'إجابتك:')} <span className="font-black">{p.userAnswer ?? '–'}</span>
                     </span>
                     {!p.isCorrect && (
                       <span className="text-emerald-700 font-black">
-                        Correct: {p.correctAnswer}
+                        {t('Correct:', 'الصحيح:')} {p.correctAnswer}
                       </span>
                     )}
                   </div>
@@ -141,7 +143,7 @@ export const QuizSummaryModal: React.FC<QuizSummaryModalProps> = ({
               className="flex-1 py-3.5 bg-neutral-900 hover:bg-neutral-800 text-amber-300 border-2 border-neutral-900 rounded-2xl font-black text-xs uppercase tracking-wider shadow-[0_3px_0_0_#171717] active:translate-y-0.5 cursor-pointer flex items-center justify-center gap-2"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Return to Arena</span>
+              <span>{t('Return to Arena', 'العودة للساحة')}</span>
             </button>
 
             <button
@@ -152,7 +154,7 @@ export const QuizSummaryModal: React.FC<QuizSummaryModalProps> = ({
               className="flex-1 py-3.5 bg-amber-400 hover:bg-amber-500 border-2 border-neutral-900 rounded-2xl font-black text-xs uppercase tracking-wider text-neutral-900 shadow-[0_3px_0_0_#171717] active:translate-y-0.5 cursor-pointer flex items-center justify-center gap-2"
             >
               <Sparkles className="w-4 h-4 text-pink-600" />
-              <span>Spend Coins in 3D Locker</span>
+              <span>{t('Spend Coins in 3D Locker', 'إنفاق العملات في الخزنة')}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

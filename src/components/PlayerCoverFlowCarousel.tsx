@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CharacterItem } from '../types';
 import { getPlayerPhotoUrl } from '../data/characters';
+import { useLanguage } from '../context/LanguageContext';
 import { sounds } from '../utils/audio';
 import { ChevronLeft, ChevronRight, Trophy, Sparkles, Check, Lock, Zap, Search, Shield, Star } from 'lucide-react';
 
@@ -25,6 +26,7 @@ export const PlayerCoverFlowCarousel: React.FC<PlayerCoverFlowCarouselProps> = (
   equippedId,
   isGoldTheme = false
 }) => {
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<'all' | 'ballondor' | 'mythic' | 'legendary' | 'epic'>('all');
 
@@ -135,7 +137,7 @@ export const PlayerCoverFlowCarousel: React.FC<PlayerCoverFlowCarouselProps> = (
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search star player..."
+            placeholder={t('Search star player...', 'ابحث عن لاعب...')}
             className="w-full bg-neutral-100 border-2 border-neutral-900 rounded-2xl pl-9 pr-3 py-1.5 text-xs font-bold text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-amber-400"
           />
         </div>
@@ -143,11 +145,11 @@ export const PlayerCoverFlowCarousel: React.FC<PlayerCoverFlowCarouselProps> = (
         {/* Filter Badges */}
         <div className="flex flex-wrap items-center gap-1.5 w-full md:w-auto justify-start md:justify-end">
           {[
-            { id: 'all', label: `All (${characters.length})` },
-            { id: 'ballondor', label: "🏆 Ballon d'Or Legends" },
-            { id: 'mythic', label: '⭐ Mythic' },
-            { id: 'legendary', label: '👑 Legendary' },
-            { id: 'epic', label: '⚡ Epic' }
+            { id: 'all', label: t(`All (${characters.length})`, `الكل (${characters.length})`) },
+            { id: 'ballondor', label: t("🏆 Ballon d'Or Legends", '🏆 أساطير الكرة الذهبية') },
+            { id: 'mythic', label: t('⭐ Mythic', '⭐ ميثيك') },
+            { id: 'legendary', label: t('👑 Legendary', '👑 أسطوري') },
+            { id: 'epic', label: t('⚡ Epic', '⚡ ملحمي') }
           ].map((cat) => (
             <button
               key={cat.id}
@@ -322,7 +324,7 @@ export const PlayerCoverFlowCarousel: React.FC<PlayerCoverFlowCarouselProps> = (
                         </h4>
                       </div>
                       <span className="font-mono text-[10px] font-black text-amber-400 shrink-0">
-                        {unlockedIds.includes(char.id) ? 'OWNED' : `🪙 ${char.price.toLocaleString()}`}
+                        {unlockedIds.includes(char.id) ? t('OWNED', 'مملوك') : `🪙 ${char.price.toLocaleString()}`}
                       </span>
                     </div>
                   </div>
@@ -372,8 +374,10 @@ export const PlayerCoverFlowCarousel: React.FC<PlayerCoverFlowCarouselProps> = (
           </div>
 
           {/* Quick Counter Indicator */}
-          <div className="flex items-center gap-2 self-end sm:self-auto font-mono text-xs font-black text-neutral-600 bg-neutral-100 px-3 py-1.5 rounded-xl border border-neutral-300">
-            <span>Player {activeIndex + 1} of {filteredCharacters.length}</span>
+          <div className="flex flex-wrap items-center gap-2 self-end sm:self-auto font-mono text-xs font-black text-neutral-600 bg-neutral-100 px-3 py-1.5 rounded-xl border border-neutral-300">
+            <span className="text-amber-700">{t('🪙 Low → High', '🪙 من الأقل للأعلى')}</span>
+            <span className="text-neutral-300">•</span>
+            <span>{t(`Player ${activeIndex + 1} of ${filteredCharacters.length}`, `لاعب ${activeIndex + 1} من ${filteredCharacters.length}`)}</span>
           </div>
         </div>
 
@@ -385,7 +389,7 @@ export const PlayerCoverFlowCarousel: React.FC<PlayerCoverFlowCarouselProps> = (
             </div>
             <div>
               <span className="text-[10px] font-black uppercase text-amber-800 block">
-                Ballon d'Or Superpower:
+                {t("Ballon d'Or Superpower:", 'القدرة الخارقة للكرة الذهبية:')}
               </span>
               <span className="text-xs sm:text-sm font-black text-neutral-900">
                 {activeChar.ballonDorPower.name} — {activeChar.ballonDorPower.description}
@@ -398,7 +402,7 @@ export const PlayerCoverFlowCarousel: React.FC<PlayerCoverFlowCarouselProps> = (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="bg-neutral-50 border border-neutral-300 rounded-2xl p-3">
             <div className="flex justify-between text-xs font-black mb-1">
-              <span className="text-neutral-700">Sprint Speed</span>
+              <span className="text-neutral-700">{t('Sprint Speed', 'السرعة')}</span>
               <span className="font-mono text-amber-600">{activeChar.stats.speed} / 100</span>
             </div>
             <div className="w-full bg-neutral-200 h-2 rounded-full overflow-hidden">
@@ -411,7 +415,7 @@ export const PlayerCoverFlowCarousel: React.FC<PlayerCoverFlowCarouselProps> = (
 
           <div className="bg-neutral-50 border border-neutral-300 rounded-2xl p-3">
             <div className="flex justify-between text-xs font-black mb-1">
-              <span className="text-neutral-700">Shot & Stamina</span>
+              <span className="text-neutral-700">{t('Shot & Stamina', 'التسديد والقوة')}</span>
               <span className="font-mono text-rose-600">{activeChar.stats.power} / 100</span>
             </div>
             <div className="w-full bg-neutral-200 h-2 rounded-full overflow-hidden">
@@ -424,7 +428,7 @@ export const PlayerCoverFlowCarousel: React.FC<PlayerCoverFlowCarouselProps> = (
 
           <div className="bg-neutral-50 border border-neutral-300 rounded-2xl p-3">
             <div className="flex justify-between text-xs font-black mb-1">
-              <span className="text-neutral-700">Math IQ & Focus</span>
+              <span className="text-neutral-700">{t('Math IQ & Focus', 'ذكاء الحساب والتركيز')}</span>
               <span className="font-mono text-emerald-600">{activeChar.stats.focus} / 100</span>
             </div>
             <div className="w-full bg-neutral-200 h-2 rounded-full overflow-hidden">
@@ -450,12 +454,12 @@ export const PlayerCoverFlowCarousel: React.FC<PlayerCoverFlowCarouselProps> = (
               {isEquipped ? (
                 <>
                   <Check className="w-5 h-5 stroke-[3]" />
-                  <span>Currently Equipped</span>
+                  <span>{t('Currently Equipped', 'مُجهز حالياً')}</span>
                 </>
               ) : (
                 <>
                   <Zap className="w-5 h-5 fill-neutral-900" />
-                  <span>Equip {activeChar.name} as Active Player</span>
+                  <span>{t(`Equip ${activeChar.name} as Active Player`, `اختيار ${activeChar.name} كلاعبك الأساسي`)}</span>
                 </>
               )}
             </button>
@@ -472,8 +476,8 @@ export const PlayerCoverFlowCarousel: React.FC<PlayerCoverFlowCarouselProps> = (
               <Lock className="w-5 h-5" />
               <span>
                 {canAfford
-                  ? `Unlock for 🪙 ${activeChar.price.toLocaleString()} Coins`
-                  : `Locked (Need 🪙 ${coinsNeeded.toLocaleString()} More Coins)`}
+                  ? t(`Unlock for 🪙 ${activeChar.price.toLocaleString()} Coins`, `فتح اللاعب مقابل 🪙 ${activeChar.price.toLocaleString()} عملة`)
+                  : t(`Locked (Need 🪙 ${coinsNeeded.toLocaleString()} More Coins)`, `مغلق (تحتاج 🪙 ${coinsNeeded.toLocaleString()} عملة إضافية)`)}
               </span>
             </button>
           )}
@@ -483,8 +487,8 @@ export const PlayerCoverFlowCarousel: React.FC<PlayerCoverFlowCarouselProps> = (
       {/* 4. FAST SCROLL THUMBNAIL STRIP (Quick Jump to Any Player) */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs font-black text-neutral-600 px-1">
-          <span>Quick Star Selector</span>
-          <span>Click any star to bring to center</span>
+          <span>{t('Quick Star Selector', 'اختيار سريع للنجوم')}</span>
+          <span>{t('Click any star to bring to center', 'اضغط على أي نجم لعرضه')}</span>
         </div>
         <div className="flex items-center gap-2.5 overflow-x-auto pb-2 scrollbar-thin">
           {filteredCharacters.map((c) => {
