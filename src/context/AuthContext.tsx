@@ -272,18 +272,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       role: 'student',
       coins: profile.coins,
       unlocked_characters: profile.unlockedCharacters,
-      equipped_character_id: profile.equippedCharacterId || '',
-      total_solved: Number(profile.stats.totalSolved ?? 0),
-      total_correct: Number(profile.stats.totalCorrect ?? 0),
-      best_streak: Number(profile.stats.bestStreak ?? 0),
-      daily_streak: Number(profile.stats.dailyStreak ?? 0),
-      last_active_date: profile.stats.lastActiveDate || null,
+      equipped_character_id: profile.equippedCharacterId,
       stats: profile.stats,
       history: profile.history,
       updated_at: new Date().toISOString()
     };
 
-    const fullPayload = { ...basePayload };
+    const fullPayload = {
+      ...basePayload,
+      daily_streak: profile.stats.dailyStreak ?? 1,
+      last_active_date: profile.stats.lastActiveDate || getTodayDateKey()
+    };
 
     const { error } = await supabase.from('profiles').upsert(fullPayload, { onConflict: 'id' });
     if (error) {
@@ -305,13 +304,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data, error } = await supabase.from('profiles').select('*').eq('id', authId).maybeSingle();
     if (error) throw error;
 
-    // Supabase is the single source of truth for signed-in accounts.
-    // Never merge a cached browser profile into cloud data: an old local cache
-    // could otherwise restore coins, characters, streaks, stats, and history
-    // after an administrator resets the profile in Supabase.
-    let profile: UserAccount = data
+    let cachedProfile: UserAccount | null = null;
+    try {
+      const cached = localStorage.getItem(`kids_center_user_${email.toLowerCase()}`);
+      if (cached) {
+        const parsed = JSON.parse(cached) as UserAccount;
+        if (parsed?.email?.toLowerCase() === email.toLowerCase()) {
+          cachedProfile = sanitizeUnearnedYamal(parsed);
+        }
+      }
+    } catch { /* Ignore invalid local cache. */ }
+
+    const cloudProfile = data
       ? mapProfile(data, email)
       : { ...DEFAULT_USER, email, nickname: email.split('@')[0] };
+
+    let profile = cloudProfile;
+    if (cachedProfile) {
+      const cloudCharacters = cloudProfile.unlockedCharacters || [];
+      const localCharacters = cachedProfile.unlockedCharacters || [];
+      const restoreLocalWallet = localCharacters.length > cloudCharacters.length;
+      const mergedStats = {
+        totalSolved: Math.max(cloudProfile.stats.totalSolved || 0, cachedProfile.stats?.totalSolved || 0),
+        totalCorrect: Math.max(cloudProfile.stats.totalCorrect || 0, cachedProfile.stats?.totalCorrect || 0),
+        totalCoinsEarned: Math.max(cloudProfile.stats.totalCoinsEarned || 0, cachedProfile.stats?.totalCoinsEarned || 0),
+        bestStreak: Math.max(cloudProfile.stats.bestStreak || 0, cachedProfile.stats?.bestStreak || 0),
+        dailyStreak: Math.max(cloudProfile.stats.dailyStreak || 0, cachedProfile.stats?.dailyStreak || 0),
+        lastActiveDate: cloudProfile.stats.lastActiveDate || cachedProfile.stats?.lastActiveDate
+      };
+      const mergedHistory = [...(cachedProfile.history || []), ...(cloudProfile.history || [])]
+        .filter((item, index, all) => all.findIndex(other => other.id === item.id) === index)
+        .slice(0, 100);
+      const mergedUnlocked = Array.from(new Set([...cloudCharacters, ...localCharacters]));
+      profile = sanitizeUnearnedYamal({
+        ...cloudProfile,
+        coins: restoreLocalWallet ? Number(cachedProfile.coins ?? cloudProfile.coins) : cloudProfile.coins,
+        unlockedCharacters: mergedUnlocked,
+        equippedCharacterId: localCharacters.includes(cachedProfile.equippedCharacterId)
+          ? cachedProfile.equippedCharacterId
+          : (cloudCharacters.includes(cloudProfile.equippedCharacterId)
+              ? cloudProfile.equippedCharacterId
+              : mergedUnlocked[0] || ''),
+        stats: mergedStats,
+        history: mergedHistory
+      });
+    }
 
     // Touch daily login streak (via RPC if available, plus local calculation)
     let streakUpdated = false;
